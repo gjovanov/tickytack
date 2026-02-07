@@ -1,0 +1,11 @@
+{
+  "name": "services",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "db": "workspace:*",
+    "config": "workspace:*",
+    "pino": "^9.9.0",
+    "pino-pretty": "^13.0.0"
+  }
+}

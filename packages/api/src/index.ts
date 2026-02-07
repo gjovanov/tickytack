@@ -1,0 +1,163 @@
+import { Elysia } from 'elysia'
+import { jwt } from '@elysiajs/jwt'
+import { cors } from '@elysiajs/cors'
+import { staticPlugin } from '@elysiajs/static'
+import swagger from '@elysiajs/swagger'
+
+import { connectDB } from 'db/src/connection'
+import logger from 'services/src/logger/logger'
+
+import NotFoundError from './errors/NotFoundError'
+import UnauthorizedError from './errors/UnauthorizedError'
+
+import { healthController } from './controllers/health/health.controller'
+import { authController } from './controllers/auth/auth.controller'
+import { orgController } from './controllers/org/org.controller'
+import { userController } from './controllers/user/user.controller'
+import { projectController } from './controllers/project/project.controller'
+import { ticketController } from './controllers/ticket/ticket.controller'
+import { ticketSearchController } from './controllers/ticket/ticket-search.controller'
+import { timeentryController } from './controllers/timeentry/timeentry.controller'
+import { exportController } from './controllers/export/export.controller'
+
+import type { UserTokenized } from './types'
+
+const port = process.env.PORT ?? 3001
+const hostname = process.env.HOST || 'localhost'
+
+// SPA paths that should serve index.html
+const spaPaths = [
+  '/auth/login',
+  '/auth/register',
+  '/timesheet',
+  '/admin',
+  '/admin/orgs',
+  '/admin/projects',
+  '/admin/tickets',
+  '/admin/users',
+  '/export',
+]
+
+// Connect to MongoDB
+await connectDB()
+logger.info('Connected to MongoDB')
+
+const AuthService = new Elysia({ name: 'Service.Auth' })
+  .use(
+    jwt({
+      name: 'jwt',
+      secret: process.env.JWT_SECRET as string,
+    }),
+  )
+  .derive({ as: 'scoped' }, async ({ cookie, headers, jwt }) => {
+    const { auth } = cookie
+    const { authorization } = headers
+    const token = auth?.value ?? authorization
+    const user = (await jwt.verify(token)) as UserTokenized | false
+    return {
+      user: user || null,
+    }
+  })
+  .macro(({ onBeforeHandle }) => ({
+    isSignIn() {
+      onBeforeHandle(({ user, error }) => {
+        if (!user) return error(401)
+      })
+    },
+  }))
+
+const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
+  .error({
+    NotFoundError,
+    UnauthorizedError,
+  })
+  .onError(({ code, error, set }) => {
+    logger.error(error, 'Unhandled application error')
+    let status = 500
+    let message: string
+    const customCode: string = code
+
+    switch (customCode) {
+      case 'VALIDATION': {
+        status = 400
+        message = error.message
+        break
+      }
+      case 'UnauthorizedError': {
+        status = 401
+        message = error.message
+        break
+      }
+      case 'NotFoundError': {
+        status = 404
+        message = error.message
+        break
+      }
+      default: {
+        status = 500
+        message = error.message
+        break
+      }
+    }
+    set.status = status
+    return { message, status }
+  })
+  .use(
+    jwt({
+      name: 'jwt',
+      secret: process.env.JWT_SECRET as string,
+    }),
+  )
+  .use(AuthService)
+  .use(
+    cors({
+      exposeHeaders: ['Content-Disposition'],
+    }),
+  )
+  .use(
+    swagger({
+      documentation: {
+        info: {
+          title: 'TickyTack API',
+          version: '1.0.0',
+          description: 'Time tracking API',
+        },
+      },
+    }),
+  )
+  .group('/api', (app) =>
+    app
+      .use(healthController)
+      .use(authController)
+      .use(orgController)
+      .use(userController)
+      .use(projectController)
+      .use(ticketController)
+      .use(ticketSearchController)
+      .use(timeentryController)
+      .use(exportController),
+  )
+  .use(
+    staticPlugin({
+      assets: '../ui/dist',
+      prefix: '',
+    }),
+  )
+
+// SPA route fallback
+for (const path of spaPaths) {
+  app.get(path, () => Bun.file('../ui/dist/index.html'))
+}
+
+app.listen({
+  port,
+  hostname,
+  idleTimeout: 255,
+})
+
+logger.info(
+  `🦊 TickyTack API is running at http://${app.server?.hostname}:${app.server?.port}`,
+)
+
+export { app }
+export type App = typeof app

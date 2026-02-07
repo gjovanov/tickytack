@@ -1,0 +1,18 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "bunx playwright test",
+    "test:ui": "bunx playwright test --ui",
+    "seed": "bun run global-setup.ts"
+  },
+  "dependencies": {
+    "config": "workspace:*",
+    "db": "workspace:*",
+    "date-fns": "^4.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.52.0"
+  }
+}

@@ -1,0 +1,24 @@
+export default {
+  login: {
+    title: 'Anmelden',
+    username: 'Benutzername',
+    password: 'Passwort',
+    orgSlug: 'Organisation',
+    submit: 'Anmelden',
+    noAccount: 'Noch kein Konto?',
+    registerLink: 'Hier registrieren',
+  },
+  register: {
+    title: 'Registrieren',
+    email: 'E-Mail',
+    username: 'Benutzername',
+    password: 'Passwort',
+    firstName: 'Vorname',
+    lastName: 'Nachname',
+    orgName: 'Organisationsname',
+    orgSlug: 'Organisations-Kurzname',
+    submit: 'Konto erstellen',
+    hasAccount: 'Bereits ein Konto?',
+    loginLink: 'Hier anmelden',
+  },
+}

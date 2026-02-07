@@ -1,0 +1,24 @@
+export default {
+  login: {
+    title: 'Login',
+    username: 'Username',
+    password: 'Password',
+    orgSlug: 'Organization',
+    submit: 'Sign In',
+    noAccount: "Don't have an account?",
+    registerLink: 'Register here',
+  },
+  register: {
+    title: 'Register',
+    email: 'Email',
+    username: 'Username',
+    password: 'Password',
+    firstName: 'First Name',
+    lastName: 'Last Name',
+    orgName: 'Organization Name',
+    orgSlug: 'Organization Slug',
+    submit: 'Create Account',
+    hasAccount: 'Already have an account?',
+    loginLink: 'Login here',
+  },
+}

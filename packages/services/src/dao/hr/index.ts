@@ -1,0 +1,6 @@
+export { departmentDao } from './department.dao'
+export { leaveTypeDao } from './leave-type.dao'
+export { leaveBalanceDao } from './leave-balance.dao'
+export { leaveRequestDao } from './leave-request.dao'
+export { businessTripDao } from './business-trip.dao'
+export { employeeDocumentDao } from './employee-document.dao'

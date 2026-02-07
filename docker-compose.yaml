@@ -1,0 +1,41 @@
+services:
+  mongodb:
+    container_name: ttt-mongodb
+    hostname: mongodb
+    image: mongo:7
+    ports:
+      - '27017:27017'
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ttt_admin
+      MONGO_INITDB_ROOT_PASSWORD: TtT_5uper5ecretPa55word
+    volumes:
+      - ttt-mongo-data:/data/db
+    networks:
+      - ttt-network
+
+  tickytack:
+    container_name: ttt-app
+    hostname: tickytack
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3001:3001'
+    environment:
+      MONGODB_URI: mongodb://ttt_admin:TtT_5uper5ecretPa55word@mongodb:27017/tickytack?authSource=admin
+      JWT_SECRET: TtT_Jwt5uper5ecret
+      HOST: 0.0.0.0
+      PORT: 3001
+    restart: always
+    depends_on:
+      - mongodb
+    networks:
+      - ttt-network
+
+volumes:
+  ttt-mongo-data:
+
+networks:
+  ttt-network:
+    name: ttt-network

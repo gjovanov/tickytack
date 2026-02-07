@@ -1,0 +1,23 @@
+{
+  "name": "tickytack",
+  "version": "1.0.0",
+  "description": "Time tracking app replicating JIRA ClockWork functionality",
+  "type": "module",
+  "scripts": {
+    "dev:api": "cd packages/api && bun run dev",
+    "dev:ui": "cd packages/ui && bun run dev",
+    "build:ui": "cd packages/ui && bun run build",
+    "start": "cd packages/api && bun run start",
+    "test": "bun test --env-file=.env.test --coverage --timeout 120000",
+    "test:e2e": "cd packages/e2e && bunx playwright test",
+    "test:e2e:ui": "cd packages/e2e && bunx playwright test --ui"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.0"
+  },
+  "author": "gjovanov",
+  "license": "ISC"
+}
