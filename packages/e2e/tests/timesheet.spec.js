@@ -79,33 +79,43 @@ test.describe("Timesheet", () => {
         if (updatedBox) {
           expect(updatedBox.height).toBeGreaterThanOrEqual(initialBox.height);
         }
+        await expect(page.locator(".v-dialog")).toBeHidden({ timeout: 1000 });
       }
     }
   });
-  test("drag and drop time entry to different slot", async ({ authenticatedPage: page }) => {
+  test("drag and drop time entry positions by card top, not mouse pointer", async ({ authenticatedPage: page }) => {
     await expect(page).toHaveURL(/\/timesheet/);
     await page.waitForLoadState("networkidle");
     const entryCard = page.locator(".time-entry-card").first();
     if (await entryCard.isVisible()) {
       const cardBox = await entryCard.boundingBox();
-      if (cardBox) {
-        const columns = page.locator(".daily-column");
-        const columnCount = await columns.count();
-        if (columnCount > 1) {
-          const targetColumn = columns.nth(columnCount - 1);
-          const targetBox = await targetColumn.boundingBox();
-          if (targetBox) {
-            const sourceX = cardBox.x + cardBox.width / 2;
-            const sourceY = cardBox.y + cardBox.height / 2;
-            const targetX = targetBox.x + targetBox.width / 2;
-            const targetY = targetBox.y + 180;
-            await page.mouse.move(sourceX, sourceY);
-            await page.mouse.down();
-            await page.mouse.move(targetX, targetY, { steps: 10 });
-            await page.mouse.up();
-            await page.waitForLoadState("networkidle");
-            await expect(page.locator(".weekly-calendar")).toBeVisible();
-          }
+      if (!cardBox)
+        return;
+      const columns = page.locator(".daily-column");
+      const firstColumn = columns.first();
+      const colBox = await firstColumn.boundingBox();
+      if (!colBox)
+        return;
+      const originalTopInColumn = cardBox.y - colBox.y;
+      const grabOffsetFromTop = cardBox.height / 2;
+      const sourceX = cardBox.x + cardBox.width / 2;
+      const sourceY = cardBox.y + grabOffsetFromTop;
+      const dropDelta = 120;
+      const targetY = sourceY + dropDelta;
+      await entryCard.dragTo(firstColumn, {
+        sourcePosition: { x: cardBox.width / 2, y: grabOffsetFromTop },
+        targetPosition: { x: colBox.width / 2, y: cardBox.y - colBox.y + grabOffsetFromTop + dropDelta }
+      });
+      await page.waitForLoadState("networkidle");
+      await expect(page.locator(".weekly-calendar")).toBeVisible();
+      await expect(page.locator(".v-dialog")).toBeHidden({ timeout: 1000 });
+      const updatedCard = page.locator(".time-entry-card").first();
+      if (await updatedCard.isVisible()) {
+        const updatedBox = await updatedCard.boundingBox();
+        if (updatedBox) {
+          const newTopInColumn = updatedBox.y - colBox.y;
+          const expectedTop = Math.round((originalTopInColumn + dropDelta) / 15) * 15;
+          expect(Math.abs(newTopInColumn - expectedTop)).toBeLessThanOrEqual(15);
         }
       }
     }

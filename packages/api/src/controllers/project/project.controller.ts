@@ -13,10 +13,17 @@ export const projectController = new Elysia({
       if (!user || (user.role !== 'admin' && user.role !== 'manager'))
         throw new Error('Forbidden')
 
-      return projectDao.create({
-        ...body,
-        orgId: orgId as unknown as import('mongoose').Types.ObjectId,
-      })
+      try {
+        return await projectDao.create({
+          ...body,
+          orgId: orgId as unknown as import('mongoose').Types.ObjectId,
+        })
+      } catch (err: any) {
+        if (err.code === 11000) {
+          throw new Error(`Project with key "${body.key}" already exists`)
+        }
+        throw err
+      }
     },
     {
       body: t.Object({

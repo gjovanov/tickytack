@@ -71,11 +71,10 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
     NotFoundError,
     UnauthorizedError,
   })
-  .onError(({ code, error, set }) => {
-    logger.error(error, 'Unhandled application error')
+  .onError(({ code, error, set, request }) => {
+    const customCode: string = code
     let status = 500
     let message: string
-    const customCode: string = code
 
     switch (customCode) {
       case 'VALIDATION': {
@@ -88,12 +87,19 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
         message = error.message
         break
       }
+      case 'NOT_FOUND': {
+        // Static plugin 404s are expected (dev mode, missing assets) — don't log
+        status = 404
+        message = 'NOT_FOUND'
+        break
+      }
       case 'NotFoundError': {
         status = 404
         message = error.message
         break
       }
       default: {
+        logger.error(error, `Unhandled error: ${request.method} ${request.url}`)
         status = 500
         message = error.message
         break

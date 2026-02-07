@@ -82,7 +82,10 @@ export async function generateTimesheetPDF(
   md += `\n**${h.total}:** ${(totalMinutes / 60).toFixed(2)}\n`
 
   const { mdToPdf } = await import('md-to-pdf')
-  const result = await mdToPdf({ content: md })
+  const result = await mdToPdf({
+    content: md,
+    pdf_options: { format: 'A4', landscape: true, margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' } },
+  })
 
   return result?.content
 }
