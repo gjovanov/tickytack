@@ -24,6 +24,12 @@ export const routes = [
             component: () => import('@/views/auth/RegisterView.vue'),
             meta: { public: true },
           },
+          {
+            path: 'oauth-callback',
+            name: 'auth.oauth-callback',
+            component: () => import('@/views/auth/OAuthCallbackView.vue'),
+            meta: { public: true },
+          },
         ],
       },
       {

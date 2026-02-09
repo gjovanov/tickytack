@@ -58,6 +58,22 @@
               </v-btn>
             </v-form>
           </v-card-text>
+          <v-divider class="mx-4 my-2" />
+          <v-card-text class="text-center pb-2 text-body-2">{{ $t('auth.login.orLoginWith') || 'Or login with' }}</v-card-text>
+          <div class="d-flex flex-wrap justify-center ga-2 px-4 pb-4">
+            <v-btn
+              v-for="p in oauthProviders"
+              :key="p.name"
+              @click="oauthLogin(p.name)"
+              :color="p.color"
+              variant="outlined"
+              size="small"
+              :disabled="!form.orgSlug"
+            >
+              <v-icon start>{{ p.icon }}</v-icon>
+              {{ p.label }}
+            </v-btn>
+          </div>
           <v-card-actions class="justify-center">
             <span class="text-body-2">{{ $t('auth.login.noAccount') }}</span>
             <router-link :to="{ name: 'auth.register' }" class="ml-1">
@@ -91,8 +107,20 @@ const form = ref({
   orgSlug: '',
 })
 
+const oauthProviders = [
+  { name: 'google', label: 'Google', icon: 'mdi-google', color: '#DB4437' },
+  { name: 'facebook', label: 'Facebook', icon: 'mdi-facebook', color: '#4267B2' },
+  { name: 'github', label: 'GitHub', icon: 'mdi-github', color: '#333' },
+  { name: 'linkedin', label: 'LinkedIn', icon: 'mdi-linkedin', color: '#0077B5' },
+  { name: 'microsoft', label: 'Microsoft', icon: 'mdi-microsoft', color: '#00A4EF' },
+]
+
 const rules = {
   required: (v) => !!v || t('validation.required', { field: '' }),
+}
+
+function oauthLogin(provider) {
+  window.location.href = `/api/oauth/${provider}?org_slug=${encodeURIComponent(form.value.orgSlug)}`
 }
 
 async function handleLogin() {

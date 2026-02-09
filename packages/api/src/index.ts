@@ -12,6 +12,7 @@ import UnauthorizedError from './errors/UnauthorizedError'
 
 import { healthController } from './controllers/health/health.controller'
 import { authController } from './controllers/auth/auth.controller'
+import { oauthController } from './controllers/auth/oauth.controller'
 import { orgController } from './controllers/org/org.controller'
 import { userController } from './controllers/user/user.controller'
 import { projectController } from './controllers/project/project.controller'
@@ -29,6 +30,7 @@ const hostname = process.env.HOST || 'localhost'
 const spaPaths = [
   '/auth/login',
   '/auth/register',
+  '/auth/oauth-callback',
   '/timesheet',
   '/admin',
   '/admin/orgs',
@@ -135,6 +137,7 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
     app
       .use(healthController)
       .use(authController)
+      .use(oauthController)
       .use(orgController)
       .use(userController)
       .use(projectController)

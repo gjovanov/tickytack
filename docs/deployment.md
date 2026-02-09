@@ -7,7 +7,7 @@
 docker compose up --build
 
 # Start only MongoDB
-docker compose up -d mongodb
+docker compose up -d mongo
 ```
 
 The app runs on port 3001 in production mode, serving both the API and the built Vue SPA.
@@ -16,7 +16,7 @@ The app runs on port 3001 in production mode, serving both the API and the built
 
 | Service | Image | Port | Description |
 |---------|-------|------|-------------|
-| `mongodb` | mongo:7 | 27017 | MongoDB database |
+| `mongo` | mongo:7 | 27017 | MongoDB database |
 | `app` | Dockerfile | 3001 | API + static UI |
 
 ## Environment Variables

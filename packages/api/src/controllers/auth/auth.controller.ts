@@ -77,6 +77,7 @@ export const authController = new Elysia({ prefix: '/auth' })
       const user = await userDao.findByUsernameAndOrgSlug(username, orgSlug)
       if (!user) throw new Error('Invalid credentials')
 
+      if (!user.password) throw new Error('Please login with your OAuth provider')
       const isValid = await Bun.password.verify(password, user.password)
       if (!isValid) throw new Error('Invalid credentials')
 
