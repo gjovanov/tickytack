@@ -16,6 +16,7 @@
                     :rules="[rules.required]"
                     variant="outlined"
                     density="compact"
+                    :readonly="isOAuth"
                   />
                 </v-col>
                 <v-col cols="6">
@@ -25,6 +26,7 @@
                     :rules="[rules.required]"
                     variant="outlined"
                     density="compact"
+                    :readonly="isOAuth"
                   />
                 </v-col>
               </v-row>
@@ -37,6 +39,7 @@
                 variant="outlined"
                 density="compact"
                 class="mb-2"
+                :readonly="isOAuth"
               />
               <v-text-field
                 v-model="form.username"
@@ -48,6 +51,7 @@
                 class="mb-2"
               />
               <v-text-field
+                v-if="!isOAuth"
                 v-model="form.password"
                 :label="$t('auth.register.password')"
                 prepend-inner-icon="mdi-lock-outline"
@@ -68,6 +72,7 @@
                 variant="outlined"
                 density="compact"
                 class="mb-2"
+                @input="autoSlug"
               />
               <v-text-field
                 v-model="form.orgSlug"
@@ -99,6 +104,23 @@
               </v-btn>
             </v-form>
           </v-card-text>
+          <template v-if="!isOAuth">
+            <v-divider class="mx-4 my-2" />
+            <v-card-text class="text-center pb-2 text-body-2">{{ $t('auth.register.orRegisterWith') || 'Or register with' }}</v-card-text>
+            <div class="d-flex flex-wrap justify-center ga-2 px-4 pb-4">
+              <v-btn
+                v-for="p in oauthProviders"
+                :key="p.name"
+                @click="oauthRegister(p.name)"
+                :color="p.color"
+                variant="outlined"
+                size="small"
+              >
+                <v-icon start>{{ p.icon }}</v-icon>
+                {{ p.label }}
+              </v-btn>
+            </div>
+          </template>
           <v-card-actions class="justify-center">
             <span class="text-body-2">{{ $t('auth.register.hasAccount') }}</span>
             <router-link :to="{ name: 'auth.login' }" class="ml-1">
@@ -112,19 +134,22 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/store/app'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const appStore = useAppStore()
 
 const formRef = ref(null)
 const showPassword = ref(false)
 const loading = ref(false)
 const error = ref('')
+const isOAuth = ref(false)
+const oauthToken = ref('')
 
 const form = ref({
   firstName: '',
@@ -136,6 +161,14 @@ const form = ref({
   orgSlug: '',
 })
 
+const oauthProviders = [
+  { name: 'google', label: 'Google', icon: 'mdi-google', color: '#DB4437' },
+  { name: 'facebook', label: 'Facebook', icon: 'mdi-facebook', color: '#4267B2' },
+  { name: 'github', label: 'GitHub', icon: 'mdi-github', color: '#333' },
+  { name: 'linkedin', label: 'LinkedIn', icon: 'mdi-linkedin', color: '#0077B5' },
+  { name: 'microsoft', label: 'Microsoft', icon: 'mdi-microsoft', color: '#00A4EF' },
+]
+
 const rules = {
   required: (v) => !!v || t('validation.required', { field: '' }),
   email: (v) => /.+@.+\..+/.test(v) || t('validation.email'),
@@ -143,14 +176,56 @@ const rules = {
     (v && v.length >= min) || t('validation.minLength', { field: '', min }),
 }
 
+function decodeJwtPayload(token) {
+  const payload = token.split('.')[1]
+  return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
+}
+
+onMounted(() => {
+  const token = route.query.oauth_token
+  if (token) {
+    oauthToken.value = token
+    isOAuth.value = true
+    try {
+      const payload = decodeJwtPayload(token)
+      form.value.email = payload.email || ''
+      const nameParts = (payload.name || '').split(' ')
+      form.value.firstName = nameParts[0] || ''
+      form.value.lastName = nameParts.slice(1).join(' ') || ''
+      form.value.username = (payload.name || '').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    } catch {
+      // ignore decode errors
+    }
+  }
+})
+
+function autoSlug() {
+  form.value.orgSlug = form.value.orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+}
+
+function oauthRegister(provider) {
+  window.location.href = `/api/oauth/${provider}?mode=register`
+}
+
 async function handleRegister() {
-  const { valid } = await formRef.value.validate()
-  if (!valid) return
+  if (!isOAuth.value) {
+    const { valid } = await formRef.value.validate()
+    if (!valid) return
+  }
 
   loading.value = true
   error.value = ''
   try {
-    await appStore.register(form.value)
+    if (isOAuth.value) {
+      await appStore.registerOAuth({
+        oauthToken: oauthToken.value,
+        orgName: form.value.orgName,
+        orgSlug: form.value.orgSlug,
+        username: form.value.username,
+      })
+    } else {
+      await appStore.register(form.value)
+    }
     router.push({ name: 'timesheet' })
   } catch (err) {
     error.value = err.response?.data?.message || t('errors.generic')

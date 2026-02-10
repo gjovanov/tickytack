@@ -167,11 +167,11 @@ function callbackUrl(provider: string): string {
   return `${config.oauth.baseUrl}/api/oauth/callback/${provider}`
 }
 
-export function buildAuthUrl(provider: string, orgSlug: string): string {
+export function buildAuthUrl(provider: string, orgSlug?: string, mode: string = 'login'): string {
   const providerDef = PROVIDERS[provider]
   if (!providerDef) throw new Error(`Unknown OAuth provider: ${provider}`)
   const { clientId } = getProviderConfig(provider)
-  const state = JSON.stringify({ orgSlug, nonce: crypto.randomUUID() })
+  const state = JSON.stringify({ orgSlug, mode, nonce: crypto.randomUUID() })
   const stateEncoded = Buffer.from(state).toString('base64url')
   return providerDef.authUrl(clientId, callbackUrl(provider), stateEncoded)
 }
@@ -258,7 +258,54 @@ export async function getOrCreateUser(
   return { user: tokenized, isNew }
 }
 
-export function parseState(stateStr: string): { orgSlug: string } {
+export async function registerWithOAuth(
+  info: OAuthUserInfo,
+  orgName: string,
+  orgSlug: string,
+  username: string,
+): Promise<{ user: UserTokenized; isNew: boolean }> {
+  const existingOrg = await Org.findOne({ slug: orgSlug.toLowerCase() })
+  if (existingOrg) throw new Error(`Organization slug "${orgSlug}" is already taken`)
+
+  const nameParts = info.name.split(' ')
+  const firstName = nameParts[0] || info.name
+  const lastName = nameParts.slice(1).join(' ') || info.name
+
+  const org = await Org.create({
+    name: orgName,
+    slug: orgSlug.toLowerCase(),
+    settings: { weekStartsOn: 1, workingHoursPerDay: 8 },
+  })
+
+  const user = await User.create({
+    email: info.email,
+    username,
+    firstName,
+    lastName,
+    role: 'admin',
+    orgId: org._id,
+    isActive: true,
+    oauthProviders: [
+      { provider: info.provider, providerId: info.providerId },
+    ],
+  })
+
+  await Org.findByIdAndUpdate(org._id, { ownerId: user._id })
+
+  const tokenized: UserTokenized = {
+    id: String(user._id),
+    email: user.email,
+    username,
+    firstName,
+    lastName,
+    role: user.role,
+    orgId: String(org._id),
+  }
+
+  return { user: tokenized, isNew: true }
+}
+
+export function parseState(stateStr: string): { orgSlug?: string; mode?: string } {
   try {
     const decoded = Buffer.from(stateStr, 'base64url').toString('utf8')
     return JSON.parse(decoded)

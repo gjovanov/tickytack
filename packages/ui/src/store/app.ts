@@ -78,6 +78,20 @@ export const useAppStore = defineStore('app', {
       localStorage.setItem('ttt_user', JSON.stringify(data.user))
       return data
     },
+    async registerOAuth(payload: {
+      oauthToken: string
+      orgName: string
+      orgSlug: string
+      username: string
+    }) {
+      const { data } = await httpClient.post('/oauth/register-oauth', payload)
+      this.auth.user = data.user
+      this.auth.token = data.token
+      this.currentOrg = data.org
+      localStorage.setItem('ttt_token', data.token)
+      localStorage.setItem('ttt_user', JSON.stringify(data.user))
+      return data
+    },
     async fetchMe() {
       try {
         const { data } = await httpClient.get('/auth/me')

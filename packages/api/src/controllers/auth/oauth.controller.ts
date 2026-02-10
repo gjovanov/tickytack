@@ -1,9 +1,10 @@
-import { Elysia } from 'elysia'
+import { Elysia, t } from 'elysia'
 import {
   buildAuthUrl,
   exchangeCodeForToken,
   fetchUserInfo,
   getOrCreateUser,
+  registerWithOAuth,
   parseState,
 } from 'services/src/biz/oauth.service'
 import { config } from 'config/src'
@@ -18,13 +19,15 @@ export const oauthController = new Elysia({ prefix: '/oauth' })
     }
 
     const orgSlug = (query as any).org_slug
-    if (!orgSlug) {
+    const mode = (query as any).mode || 'login'
+
+    if (mode === 'login' && !orgSlug) {
       set.status = 400
-      return { message: 'org_slug query parameter is required' }
+      return { message: 'org_slug query parameter is required for login' }
     }
 
     try {
-      const authUrl = buildAuthUrl(provider, orgSlug)
+      const authUrl = buildAuthUrl(provider, orgSlug, mode)
       return Response.redirect(authUrl, 302)
     } catch (err: any) {
       set.status = 400
@@ -44,13 +47,28 @@ export const oauthController = new Elysia({ prefix: '/oauth' })
     }
 
     try {
-      const { orgSlug } = parseState(state)
+      const { orgSlug, mode } = parseState(state)
       const accessToken = await exchangeCodeForToken(provider, code)
       const userInfo = await fetchUserInfo(provider, accessToken)
 
       if (!userInfo.email) {
         set.status = 400
         return { message: 'Could not retrieve email from OAuth provider' }
+      }
+
+      if (mode === 'register') {
+        const pendingToken: string = await jwt.sign({
+          type: 'oauth_pending',
+          email: userInfo.email,
+          name: userInfo.name,
+          provider: userInfo.provider,
+          providerId: userInfo.providerId,
+          avatarUrl: userInfo.avatarUrl || '',
+        } as any)
+        return Response.redirect(
+          `${config.oauth.frontendUrl}/auth/register?oauth_token=${pendingToken}`,
+          302,
+        )
       }
 
       const { user } = await getOrCreateUser(userInfo, orgSlug)
@@ -67,4 +85,41 @@ export const oauthController = new Elysia({ prefix: '/oauth' })
     } catch (err: any) {
       return Response.redirect(`${config.oauth.frontendUrl}/auth/login?error=${encodeURIComponent(err.message)}`, 302)
     }
+  })
+  .post('/register-oauth', async ({ jwt, body, cookie: { auth }, set }) => {
+    try {
+      const pending = await jwt.verify(body.oauthToken)
+      if (!pending || (pending as any).type !== 'oauth_pending') {
+        set.status = 400
+        return { message: 'Invalid or expired OAuth token' }
+      }
+
+      const p = pending as any
+      const { user } = await registerWithOAuth(
+        { provider: p.provider, providerId: p.providerId, email: p.email, name: p.name, avatarUrl: p.avatarUrl },
+        body.orgName,
+        body.orgSlug,
+        body.username,
+      )
+
+      const token: string = await jwt.sign(user as any)
+      auth.set({
+        value: token,
+        httpOnly: true,
+        maxAge: 24 * 86400,
+        path: '/',
+      })
+
+      return { user, token, org: { id: user.orgId, name: body.orgName, slug: body.orgSlug } }
+    } catch (err: any) {
+      set.status = 400
+      return { message: err.message }
+    }
+  }, {
+    body: t.Object({
+      oauthToken: t.String(),
+      orgName: t.String({ minLength: 1 }),
+      orgSlug: t.String({ minLength: 1 }),
+      username: t.String({ minLength: 3 }),
+    }),
   })
