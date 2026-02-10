@@ -52,46 +52,56 @@ Full-stack time tracking and project management application with weekly calendar
 ## Architecture
 
 ```
-tickytack/
-├── packages/
-│   ├── config/        # Environment configuration loader
-│   ├── db/            # Mongoose models (48+) and MongoDB connection
-│   │   └── src/models/
-│   │       ├── org, user, invite          # Core
-│   │       ├── project, ticket, time-entry # Time Tracking
-│   │       ├── accounting/                 # 7 accounting models
-│   │       ├── invoicing/                  # 2 invoicing models
-│   │       ├── warehouse/                  # 5 warehouse models
-│   │       ├── payroll/                    # 4 payroll models
-│   │       ├── hr/                         # 6 HR models
-│   │       ├── crm/                        # 4 CRM models
-│   │       └── erp/                        # 5 ERP models
-│   ├── services/      # DAOs (30+) with BaseDao<T> + logger (Pino)
-│   ├── api/           # Elysia.js REST API + JWT auth + OAuth
-│   │   └── src/controllers/
-│   │       ├── auth/, user/, org/          # Core controllers
-│   │       ├── invite/                     # Invite system
-│   │       ├── project/, ticket/, timeentry/ # Time tracking
-│   │       └── export/                     # Excel/PDF export
-│   ├── reporting/     # Excel (formulas) and PDF (markdown) export
-│   ├── ui/            # Vue 3 + Vuetify SPA (amber/warm theme)
-│   │   └── src/
-│   │       ├── views/     # auth, admin, timesheet, export, invite
-│   │       ├── store/     # 5+ Pinia stores
-│   │       └── plugins/   # i18n → vuetify → pinia → router
-│   ├── tests/         # Integration tests (mongodb-memory-server)
-│   └── e2e/           # Playwright E2E tests
-├── docker-compose.yaml
-└── Dockerfile
-```
-
-### Package Dependency Flow
-
-```
-config ← db ← services ← api (+ reporting)
-ui → HTTP → api
-tests → db + services (direct import)
-e2e → Playwright → api
+┌──────────────────────────────────────────────────────────────────┐
+│  Browser (Vue 3 + Vuetify 3 SPA)                                │
+│  ┌───────────────┐ ┌────────────┐ ┌──────────────────────────┐  │
+│  │ Pinia Stores  │ │  Router    │ │  Views                   │  │
+│  │ app, projects │ │  auth,     │ │  Timesheet (weekly cal), │  │
+│  │ tickets,      │ │  admin,    │ │  Export preview,         │  │
+│  │ timesheet,    │ │  timesheet │ │  Admin (projects/users), │  │
+│  │ invite        │ │  export    │ │  Invite landing/manage   │  │
+│  └───────────────┘ └────────────┘ └──────────────────────────┘  │
+└──────────────────────────┬───────────────────────────────────────┘
+                           │ REST / HTTP
+                           ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  Elysia.js API (Bun runtime)                                    │
+│  ┌──────────────────────┐  ┌──────────────────────────────────┐ │
+│  │  Auth & Security     │  │  REST Controllers                │ │
+│  │  JWT httpOnly cookie │  │  auth, user, org, invite         │ │
+│  │  OAuth 2.0 (5 prov.) │  │  project, ticket, time-entry    │ │
+│  │  Role-based access   │  │  export (Excel/PDF)              │ │
+│  │  (admin/manager/     │  │  + 7 ERP modules (accounting,   │ │
+│  │   member)            │  │    invoicing, warehouse, payroll,│ │
+│  └──────────────────────┘  │    hr, crm, erp)                │ │
+│                            └───────────────┬──────────────────┘ │
+└────────────────────────────────────────────┼────────────────────┘
+                                             │
+            ┌────────────────────────────────┼─────────────────┐
+            ▼                                ▼                 ▼
+┌────────────────────┐  ┌───────────────────────┐  ┌─────────────────┐
+│  Services Layer    │  │  Reporting Engine      │  │  External       │
+│  ┌──────────────┐  │  │  ┌─────────────────┐  │  │  Integrations   │
+│  │ 30+ DAOs     │  │  │  │ ExcelJS         │  │  │                 │
+│  │ BaseDao<T>   │  │  │  │ (SUM, formulas) │  │  │  OAuth:         │
+│  │ Auth service │  │  │  ├─────────────────┤  │  │  Google,        │
+│  │ OAuth service│  │  │  │ md-to-pdf       │  │  │  Facebook,      │
+│  │ Pino logger  │  │  │  │ (PDF export)    │  │  │  GitHub,        │
+│  └──────┬───────┘  │  │  └─────────────────┘  │  │  LinkedIn,      │
+│         │          │  └───────────────────────┘  │  Microsoft      │
+└─────────┼──────────┘                             └─────────────────┘
+          ▼
+┌───────────────────────┐
+│  MongoDB 7            │
+│  48+ collections      │
+│  (multi-tenant,       │
+│   orgId scoping)      │
+│                       │
+│  Core: org, user,     │
+│    project, ticket,   │
+│    time-entry, invite │
+│  ERP: 7 modules       │
+└───────────────────────┘
 ```
 
 ## Quick Start

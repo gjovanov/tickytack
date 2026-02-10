@@ -1,5 +1,5 @@
 import { connectDB, disconnectDB } from 'db/src/connection'
-import { Org, User, Project, Ticket, TimeEntry } from 'db/src/models'
+import { Org, User, Project, Ticket, TimeEntry, Invite } from 'db/src/models'
 import { addDays, startOfWeek } from 'date-fns'
 
 async function globalSetup() {
@@ -12,6 +12,7 @@ async function globalSetup() {
     Project.deleteMany({}),
     Ticket.deleteMany({}),
     TimeEntry.deleteMany({}),
+    Invite.deleteMany({}),
   ])
 
   // Create org
