@@ -51,57 +51,39 @@ Full-stack time tracking and project management application with weekly calendar
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  Browser (Vue 3 + Vuetify 3 SPA)                                │
-│  ┌───────────────┐ ┌────────────┐ ┌──────────────────────────┐  │
-│  │ Pinia Stores  │ │  Router    │ │  Views                   │  │
-│  │ app, projects │ │  auth,     │ │  Timesheet (weekly cal), │  │
-│  │ tickets,      │ │  admin,    │ │  Export preview,         │  │
-│  │ timesheet,    │ │  timesheet │ │  Admin (projects/users), │  │
-│  │ invite        │ │  export    │ │  Invite landing/manage   │  │
-│  └───────────────┘ └────────────┘ └──────────────────────────┘  │
-└──────────────────────────┬───────────────────────────────────────┘
-                           │ REST / HTTP
-                           ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  Elysia.js API (Bun runtime)                                    │
-│  ┌──────────────────────┐  ┌──────────────────────────────────┐ │
-│  │  Auth & Security     │  │  REST Controllers                │ │
-│  │  JWT httpOnly cookie │  │  auth, user, org, invite         │ │
-│  │  OAuth 2.0 (5 prov.) │  │  project, ticket, time-entry    │ │
-│  │  Role-based access   │  │  export (Excel/PDF)              │ │
-│  │  (admin/manager/     │  │  + 7 ERP modules (accounting,   │ │
-│  │   member)            │  │    invoicing, warehouse, payroll,│ │
-│  └──────────────────────┘  │    hr, crm, erp)                │ │
-│                            └───────────────┬──────────────────┘ │
-└────────────────────────────────────────────┼────────────────────┘
-                                             │
-            ┌────────────────────────────────┼─────────────────┐
-            ▼                                ▼                 ▼
-┌────────────────────┐  ┌───────────────────────┐  ┌─────────────────┐
-│  Services Layer    │  │  Reporting Engine      │  │  External       │
-│  ┌──────────────┐  │  │  ┌─────────────────┐  │  │  Integrations   │
-│  │ 30+ DAOs     │  │  │  │ ExcelJS         │  │  │                 │
-│  │ BaseDao<T>   │  │  │  │ (SUM, formulas) │  │  │  OAuth:         │
-│  │ Auth service │  │  │  ├─────────────────┤  │  │  Google,        │
-│  │ OAuth service│  │  │  │ md-to-pdf       │  │  │  Facebook,      │
-│  │ Pino logger  │  │  │  │ (PDF export)    │  │  │  GitHub,        │
-│  └──────┬───────┘  │  │  └─────────────────┘  │  │  LinkedIn,      │
-│         │          │  └───────────────────────┘  │  Microsoft      │
-└─────────┼──────────┘                             └─────────────────┘
-          ▼
-┌───────────────────────┐
-│  MongoDB 7            │
-│  48+ collections      │
-│  (multi-tenant,       │
-│   orgId scoping)      │
-│                       │
-│  Core: org, user,     │
-│    project, ticket,   │
-│    time-entry, invite │
-│  ERP: 7 modules       │
-└───────────────────────┘
+```mermaid
+graph TB
+    subgraph Client["Browser"]
+        UI["Vue 3 + Vuetify 3 SPA<br/>Pinia stores · i18n (en/de)<br/>:3000"]
+    end
+
+    subgraph Server["Bun Runtime"]
+        AUTH["Auth Layer<br/>JWT httpOnly · OAuth 2.0<br/>Roles: admin / manager / member"]
+        CTRL["REST Controllers<br/>auth · user · org · invite<br/>project · ticket · time-entry<br/>+ 7 ERP modules"]
+        SVC["Services Layer<br/>30+ DAOs · BaseDao&lt;T&gt;<br/>Auth · OAuth · Pino logger"]
+        RPT["Reporting Engine<br/>ExcelJS (formulas) · md-to-pdf"]
+    end
+
+    subgraph External["External Services"]
+        OAUTH["OAuth Providers<br/>Google · Facebook · GitHub<br/>LinkedIn · Microsoft"]
+    end
+
+    DB[("MongoDB 7<br/>48+ collections<br/>multi-tenant (orgId)")]
+
+    UI -->|"REST / HTTP"| AUTH
+    AUTH --> CTRL
+    CTRL --> SVC
+    CTRL --> RPT
+    SVC --> DB
+    AUTH --> OAUTH
+
+    style UI fill:#F57C00,color:#fff
+    style AUTH fill:#4E342E,color:#fff
+    style CTRL fill:#E65100,color:#fff
+    style SVC fill:#00695C,color:#fff
+    style RPT fill:#1565C0,color:#fff
+    style DB fill:#2E7D32,color:#fff
+    style OAUTH fill:#37474F,color:#fff
 ```
 
 ## Quick Start
