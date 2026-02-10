@@ -1,5 +1,0 @@
-export { productDao } from './product.dao'
-export { warehouseDao } from './warehouse.dao'
-export { stockLevelDao } from './stock-level.dao'
-export { stockMovementDao } from './stock-movement.dao'
-export { priceListDao } from './price-list.dao'

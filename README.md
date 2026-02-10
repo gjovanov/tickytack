@@ -1,6 +1,6 @@
 # TickyTack
 
-Full-stack time tracking and project management application with weekly calendar view, multi-tenant organization support, ERP modules, and Excel/PDF export with formula-based calculations.
+Full-stack time tracking and project management application with weekly calendar view, multi-tenant organization support, and Excel/PDF export with formula-based calculations.
 
 ## Features
 
@@ -12,19 +12,6 @@ Full-stack time tracking and project management application with weekly calendar
 | **Project Management** | Full CRUD with auto-generated ticket keys | :white_check_mark: |
 | | Color-coded projects | :white_check_mark: |
 | | Ticket status workflow (open → done → closed) | :white_check_mark: |
-| **Accounting** | Chart of Accounts, Journal Entries | :white_check_mark: |
-| | Fiscal Years & Periods | :white_check_mark: |
-| | Fixed Assets, Bank Accounts, Exchange Rates | :white_check_mark: |
-| **Invoicing** | Contacts, Invoices with line items | :white_check_mark: |
-| **Warehouse** | Products, Stock Levels, Movements | :white_check_mark: |
-| | Price Lists, Stock Movement Tracking | :white_check_mark: |
-| **Payroll** | Employees, Payroll Runs, Payslips | :white_check_mark: |
-| | ERP Timesheets | :white_check_mark: |
-| **HR** | Departments, Leave Management | :white_check_mark: |
-| | Business Trips, Employee Documents | :white_check_mark: |
-| **CRM** | Pipelines, Leads, Deals, Activities | :white_check_mark: |
-| **ERP** | Bill of Materials, Production Orders | :white_check_mark: |
-| | Construction Projects, POS | :white_check_mark: |
 | **Export** | Excel with formulas (`=SUM()`, `=(End-Start)*24`) | :white_check_mark: |
 | | PDF via markdown rendering | :white_check_mark: |
 | | Preview table with editable descriptions | :white_check_mark: |
@@ -59,8 +46,8 @@ graph TB
 
     subgraph Server["Bun Runtime"]
         AUTH["Auth Layer<br/>JWT httpOnly · OAuth 2.0<br/>Roles: admin / manager / member"]
-        CTRL["REST Controllers<br/>auth · user · org · invite<br/>project · ticket · time-entry<br/>+ 7 ERP modules"]
-        SVC["Services Layer<br/>30+ DAOs · BaseDao&lt;T&gt;<br/>Auth · OAuth · Pino logger"]
+        CTRL["REST Controllers<br/>auth · user · org · invite<br/>project · ticket · time-entry"]
+        SVC["Services Layer<br/>6 DAOs · BaseDao&lt;T&gt;<br/>Auth · OAuth · Pino logger"]
         RPT["Reporting Engine<br/>ExcelJS (formulas) · md-to-pdf"]
     end
 
@@ -68,7 +55,7 @@ graph TB
         OAUTH["OAuth Providers<br/>Google · Facebook · GitHub<br/>LinkedIn · Microsoft"]
     end
 
-    DB[("MongoDB 7<br/>48+ collections<br/>multi-tenant (orgId)")]
+    DB[("MongoDB 7<br/>6 collections<br/>multi-tenant (orgId)")]
 
     UI -->|"REST / HTTP"| AUTH
     AUTH --> CTRL

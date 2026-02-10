@@ -1,7 +1,0 @@
-export { accountDao } from './account.dao'
-export { journalEntryDao } from './journal-entry.dao'
-export { fiscalYearDao } from './fiscal-year.dao'
-export { fiscalPeriodDao } from './fiscal-period.dao'
-export { fixedAssetDao } from './fixed-asset.dao'
-export { bankAccountDao } from './bank-account.dao'
-export { exchangeRateDao } from './exchange-rate.dao'
