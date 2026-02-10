@@ -87,13 +87,14 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/store/app'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const appStore = useAppStore()
 
 const formRef = ref(null)
@@ -119,6 +120,13 @@ const rules = {
   required: (v) => !!v || t('validation.required', { field: '' }),
 }
 
+onMounted(() => {
+  const invite = route.query.invite
+  if (invite) {
+    sessionStorage.setItem('ttt_invite_code', invite)
+  }
+})
+
 function oauthLogin(provider) {
   window.location.href = `/api/oauth/${provider}?org_slug=${encodeURIComponent(form.value.orgSlug)}`
 }
@@ -131,7 +139,12 @@ async function handleLogin() {
   error.value = ''
   try {
     await appStore.login(form.value.username, form.value.password, form.value.orgSlug)
-    router.push({ name: 'timesheet' })
+    const pendingInvite = sessionStorage.getItem('ttt_invite_code')
+    if (pendingInvite) {
+      router.push({ name: 'invite', params: { code: pendingInvite } })
+    } else {
+      router.push({ name: 'timesheet' })
+    }
   } catch (err) {
     error.value = t('errors.loginFailed')
   } finally {

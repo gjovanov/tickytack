@@ -20,6 +20,7 @@ import { ticketController } from './controllers/ticket/ticket.controller'
 import { ticketSearchController } from './controllers/ticket/ticket-search.controller'
 import { timeentryController } from './controllers/timeentry/timeentry.controller'
 import { exportController } from './controllers/export/export.controller'
+import { inviteController } from './controllers/invite/invite.controller'
 
 import type { UserTokenized } from './types'
 
@@ -31,12 +32,14 @@ const spaPaths = [
   '/auth/login',
   '/auth/register',
   '/auth/oauth-callback',
+  '/invite/:code',
   '/timesheet',
   '/admin',
   '/admin/orgs',
   '/admin/projects',
   '/admin/tickets',
   '/admin/users',
+  '/admin/invites',
   '/export',
 ]
 
@@ -144,7 +147,8 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
       .use(ticketController)
       .use(ticketSearchController)
       .use(timeentryController)
-      .use(exportController),
+      .use(exportController)
+      .use(inviteController),
   )
   .use(
     staticPlugin({

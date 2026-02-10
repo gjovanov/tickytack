@@ -67,8 +67,9 @@ export const useAppStore = defineStore('app', {
       password: string
       firstName: string
       lastName: string
-      orgName: string
-      orgSlug: string
+      orgName?: string
+      orgSlug?: string
+      inviteCode?: string
     }) {
       const { data } = await httpClient.post('/auth/register', payload)
       this.auth.user = data.user

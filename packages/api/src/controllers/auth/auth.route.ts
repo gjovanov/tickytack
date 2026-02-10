@@ -9,8 +9,9 @@ export const authRegister = {
       password: t.String({ minLength: 6 }),
       firstName: t.String({ minLength: 1 }),
       lastName: t.String({ minLength: 1 }),
-      orgName: t.String({ minLength: 1 }),
-      orgSlug: t.String({ minLength: 1 }),
+      orgName: t.Optional(t.String({ minLength: 1 })),
+      orgSlug: t.Optional(t.String({ minLength: 1 })),
+      inviteCode: t.Optional(t.String()),
     }),
   },
 }

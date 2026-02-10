@@ -64,7 +64,17 @@
                 class="mb-2"
               />
               <v-divider class="my-3" />
+              <v-alert
+                v-if="inviteOrgName"
+                type="info"
+                variant="tonal"
+                density="compact"
+                class="mb-4"
+              >
+                Joining <strong>{{ inviteOrgName }}</strong>
+              </v-alert>
               <v-text-field
+                v-if="!inviteCode"
                 v-model="form.orgName"
                 :label="$t('auth.register.orgName')"
                 prepend-inner-icon="mdi-office-building-outline"
@@ -75,6 +85,7 @@
                 @input="autoSlug"
               />
               <v-text-field
+                v-if="!inviteCode"
                 v-model="form.orgSlug"
                 :label="$t('auth.register.orgSlug')"
                 prepend-inner-icon="mdi-link-variant"
@@ -151,6 +162,9 @@ const error = ref('')
 const isOAuth = ref(false)
 const oauthToken = ref('')
 
+const inviteCode = ref('')
+const inviteOrgName = ref('')
+
 const form = ref({
   firstName: '',
   lastName: '',
@@ -181,7 +195,22 @@ function decodeJwtPayload(token) {
   return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
 }
 
-onMounted(() => {
+onMounted(async () => {
+  // Check for invite code
+  const invite = route.query.invite || sessionStorage.getItem('ttt_invite_code')
+  if (invite) {
+    inviteCode.value = invite
+    sessionStorage.setItem('ttt_invite_code', invite)
+    try {
+      const { data } = await (await import('@/services/http-client')).default.get(`/invite/${invite}`)
+      if (data.isValid) {
+        inviteOrgName.value = data.orgName
+      }
+    } catch {
+      // ignore
+    }
+  }
+
   const token = route.query.oauth_token
   if (token) {
     oauthToken.value = token
@@ -224,8 +253,13 @@ async function handleRegister() {
         username: form.value.username,
       })
     } else {
-      await appStore.register(form.value)
+      const payload = { ...form.value }
+      if (inviteCode.value) {
+        payload.inviteCode = inviteCode.value
+      }
+      await appStore.register(payload)
     }
+    sessionStorage.removeItem('ttt_invite_code')
     router.push({ name: 'timesheet' })
   } catch (err) {
     error.value = err.response?.data?.message || t('errors.generic')

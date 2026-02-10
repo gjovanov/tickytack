@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Clock face -->
+  <circle cx="60" cy="60" r="54" fill="#F57C00" opacity="0.15"/>
+  <circle cx="60" cy="60" r="50" fill="none" stroke="#F57C00" stroke-width="4"/>
+  <!-- Clock ticks -->
+  <line x1="60" y1="14" x2="60" y2="22" stroke="#5D4037" stroke-width="3" stroke-linecap="round"/>
+  <line x1="60" y1="98" x2="60" y2="106" stroke="#5D4037" stroke-width="3" stroke-linecap="round"/>
+  <line x1="14" y1="60" x2="22" y2="60" stroke="#5D4037" stroke-width="3" stroke-linecap="round"/>
+  <line x1="98" y1="60" x2="106" y2="60" stroke="#5D4037" stroke-width="3" stroke-linecap="round"/>
+  <!-- Hour hand (T) pointing to 10 -->
+  <line x1="60" y1="60" x2="38" y2="30" stroke="#F57C00" stroke-width="5" stroke-linecap="round"/>
+  <!-- Minute hand (T) pointing to 2 -->
+  <line x1="60" y1="60" x2="82" y2="28" stroke="#F57C00" stroke-width="3" stroke-linecap="round"/>
+  <!-- Center dot -->
+  <circle cx="60" cy="60" r="5" fill="#5D4037"/>
+  <!-- TT text below -->
+  <text x="60" y="90" font-size="18" text-anchor="middle" fill="#5D4037" font-family="Arial, Helvetica, sans-serif" font-weight="bold">TT</text>
+</svg>

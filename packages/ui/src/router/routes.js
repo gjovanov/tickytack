@@ -9,6 +9,12 @@ export const routes = [
         redirect: '/timesheet',
       },
       {
+        path: 'invite/:code',
+        name: 'invite',
+        component: () => import('@/views/invite/InviteLandingView.vue'),
+        meta: { public: true },
+      },
+      {
         path: 'auth',
         name: 'auth',
         children: [
@@ -65,6 +71,11 @@ export const routes = [
             path: 'users',
             name: 'admin.users',
             component: () => import('@/views/admin/UsersView.vue'),
+          },
+          {
+            path: 'invites',
+            name: 'admin.invites',
+            component: () => import('@/views/admin/InvitesView.vue'),
           },
         ],
       },

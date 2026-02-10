@@ -1,5 +1,5 @@
 import { Elysia } from 'elysia'
-import { orgDao, userDao } from 'services/src/dao'
+import { orgDao, userDao, inviteDao } from 'services/src/dao'
 import { authRegister, authLogin, authMe, authLogout } from './auth.route'
 import type { UserTokenized } from '../../types'
 
@@ -25,20 +25,46 @@ export const authController = new Elysia({ prefix: '/auth' })
   .post(
     authRegister.path,
     async ({ jwt, body, cookie: { auth } }) => {
-      const { email, username, password, firstName, lastName, orgName, orgSlug } = body
+      const { email, username, password, firstName, lastName, orgName, orgSlug, inviteCode } = body
 
-      const existingOrg = await orgDao.findBySlug(orgSlug)
-      if (existingOrg) {
-        throw new Error('Organization slug already exists')
+      let org: any
+      let role = 'admin'
+
+      if (inviteCode) {
+        // Invite-based registration: join existing org
+        const invite = await inviteDao.findByCode(inviteCode)
+        if (!invite) throw new Error('Invalid invite code')
+
+        const validation = inviteDao.validate(invite)
+        if (!validation.valid) throw new Error(validation.reason || 'Invite is not valid')
+
+        if (invite.targetEmail && invite.targetEmail !== email) {
+          throw new Error('This invite is for a different email address')
+        }
+
+        org = await orgDao.findById(invite.orgId)
+        if (!org) throw new Error('Organization not found')
+
+        role = invite.assignRole || 'member'
+
+        // Increment use count
+        const updated = await inviteDao.incrementUseCount(String(invite._id))
+        if (!updated) throw new Error('Invite could not be used')
+      } else {
+        // Normal registration: create new org
+        if (!orgName || !orgSlug) throw new Error('Organization name and slug are required')
+
+        const existingOrg = await orgDao.findBySlug(orgSlug)
+        if (existingOrg) throw new Error('Organization slug already exists')
+
+        org = await orgDao.create({
+          name: orgName,
+          slug: orgSlug.toLowerCase(),
+          settings: { weekStartsOn: 1, workingHoursPerDay: 8 },
+        })
       }
 
       const hashedPassword = await Bun.password.hash(password)
-
-      const org = await orgDao.create({
-        name: orgName,
-        slug: orgSlug.toLowerCase(),
-        settings: { weekStartsOn: 1, workingHoursPerDay: 8 },
-      })
 
       const user = await userDao.create({
         email,
@@ -46,13 +72,15 @@ export const authController = new Elysia({ prefix: '/auth' })
         password: hashedPassword,
         firstName,
         lastName,
-        role: 'admin',
+        role,
         orgId: org._id,
         isActive: true,
       })
 
-      // Set org owner
-      await orgDao.update(org._id, { ownerId: user._id })
+      if (!inviteCode) {
+        // Set org owner for new orgs only
+        await orgDao.update(org._id, { ownerId: user._id })
+      }
 
       const userTokenized = tokenizeUser(user)
       const accessToken: string = await jwt.sign(userTokenized)
