@@ -1,5 +1,11 @@
 export const routes = [
   {
+    path: '/landing',
+    name: 'landing',
+    component: () => import('@/views/LandingView.vue'),
+    meta: { public: true, guest: true },
+  },
+  {
     path: '/',
     component: () => import('@/layouts/default/DefaultLayout.vue'),
     children: [
@@ -76,6 +82,11 @@ export const routes = [
             path: 'invites',
             name: 'admin.invites',
             component: () => import('@/views/admin/InvitesView.vue'),
+          },
+          {
+            path: 'billing',
+            name: 'admin.billing',
+            component: () => import('@/views/admin/BillingView.vue'),
           },
         ],
       },

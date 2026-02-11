@@ -19,5 +19,8 @@
     "@biomejs/biome": "^2.3.0"
   },
   "author": "gjovanov",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "stripe": "^20.3.1"
+  }
 }

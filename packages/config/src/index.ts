@@ -1,3 +1,26 @@
+export const PLANS = {
+  free: {
+    id: 'free',
+    name: 'Free',
+    price: 0,
+    limits: { maxUsers: 3, maxProjects: 2, exportEnabled: false, teamReporting: false, invoicing: false },
+  },
+  pro: {
+    id: 'pro',
+    name: 'Pro',
+    price: 7,
+    limits: { maxUsers: -1, maxProjects: -1, exportEnabled: true, teamReporting: true, invoicing: false },
+  },
+  business: {
+    id: 'business',
+    name: 'Business',
+    price: 14,
+    limits: { maxUsers: -1, maxProjects: -1, exportEnabled: true, teamReporting: true, invoicing: true },
+  },
+} as const
+
+export type PlanId = keyof typeof PLANS
+
 export const config = {
   mongodb: {
     uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/tickytack',
@@ -8,6 +31,15 @@ export const config = {
   server: {
     host: process.env.HOST || 'localhost',
     port: Number(process.env.PORT) || 3001,
+  },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY || '',
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || '',
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || '',
+    priceIds: {
+      pro: process.env.STRIPE_PRICE_PRO || '',
+      business: process.env.STRIPE_PRICE_BUSINESS || '',
+    },
   },
   oauth: {
     baseUrl: process.env.OAUTH_BASE_URL || 'http://localhost:3001',

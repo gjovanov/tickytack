@@ -9,6 +9,14 @@ export interface IOrg extends Document {
     weekStartsOn: number
     workingHoursPerDay: number
   }
+  subscription: {
+    plan: string
+    stripeCustomerId?: string
+    stripeSubscriptionId?: string
+    status: string
+    currentPeriodEnd?: Date
+    cancelAtPeriodEnd: boolean
+  }
   createdAt: Date
   updatedAt: Date
 }
@@ -22,6 +30,14 @@ const orgSchema = new Schema<IOrg>(
     settings: {
       weekStartsOn: { type: Number, default: 1 },
       workingHoursPerDay: { type: Number, default: 8 },
+    },
+    subscription: {
+      plan: { type: String, default: 'free' },
+      stripeCustomerId: String,
+      stripeSubscriptionId: String,
+      status: { type: String, default: 'active' },
+      currentPeriodEnd: Date,
+      cancelAtPeriodEnd: { type: Boolean, default: false },
     },
   },
   { timestamps: true },

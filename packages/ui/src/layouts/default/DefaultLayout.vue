@@ -33,6 +33,11 @@
           prepend-icon="mdi-office-building-outline"
           :to="{ name: 'admin.orgs' }"
         />
+        <v-list-item
+          title="Billing"
+          prepend-icon="mdi-credit-card-outline"
+          :to="{ name: 'admin.billing' }"
+        />
         <v-divider class="my-2" />
         <v-list-item
           :title="$t('nav.export')"

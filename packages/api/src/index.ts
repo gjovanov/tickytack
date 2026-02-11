@@ -21,6 +21,7 @@ import { ticketSearchController } from './controllers/ticket/ticket-search.contr
 import { timeentryController } from './controllers/timeentry/timeentry.controller'
 import { exportController } from './controllers/export/export.controller'
 import { inviteController } from './controllers/invite/invite.controller'
+import { stripeController } from './controllers/stripe/stripe.controller'
 
 import type { UserTokenized } from './types'
 
@@ -29,6 +30,7 @@ const hostname = process.env.HOST || 'localhost'
 
 // SPA paths that should serve index.html
 const spaPaths = [
+  '/landing',
   '/auth/login',
   '/auth/register',
   '/auth/oauth-callback',
@@ -40,6 +42,7 @@ const spaPaths = [
   '/admin/tickets',
   '/admin/users',
   '/admin/invites',
+  '/admin/billing',
   '/export',
 ]
 
@@ -148,7 +151,8 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
       .use(ticketSearchController)
       .use(timeentryController)
       .use(exportController)
-      .use(inviteController),
+      .use(inviteController)
+      .use(stripeController),
   )
   .use(
     staticPlugin({
