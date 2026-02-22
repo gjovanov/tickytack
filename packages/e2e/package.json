@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "test": "bunx playwright test",
-    "test:ui": "bunx playwright test --ui",
-    "seed": "bun run global-setup.ts"
+    "test": "bun run seed && SKIP_SEED=1 PATH=$HOME/.local/node/bin:$PATH ./node_modules/.bin/playwright test",
+    "test:ui": "bun run seed && SKIP_SEED=1 PATH=$HOME/.local/node/bin:$PATH ./node_modules/.bin/playwright test --ui",
+    "seed": "bun run --env-file=../../.env global-setup.ts"
   },
   "dependencies": {
     "config": "workspace:*",

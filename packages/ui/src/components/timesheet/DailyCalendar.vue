@@ -38,6 +38,7 @@
           :entries="dayEntries"
           :is-today="dayInfo.isToday"
           @click-slot="(hour) => $emit('click-slot', { date: dayInfo.dateStr, hour })"
+          @drag-select="(data) => $emit('drag-select', { date: dayInfo.dateStr, ...data })"
           @click-entry="(entry) => $emit('click-entry', entry)"
           @resize-entry="(data) => $emit('resize-entry', data)"
           @drop-entry="(data) => $emit('drop-entry', data)"
@@ -58,7 +59,7 @@ const props = defineProps({
   loading: { type: Boolean, default: false },
 })
 
-defineEmits(['click-slot', 'click-entry', 'resize-entry', 'drop-entry'])
+defineEmits(['click-slot', 'drag-select', 'click-entry', 'resize-entry', 'drop-entry'])
 
 const calendarBody = ref(null)
 

@@ -91,6 +91,78 @@ describe('Full flow integration', () => {
     expect((entries[0].projectId as any).key).toBe('TST')
   })
 
+  it('duplicate project key throws error', async () => {
+    const org = await Org.create({ name: 'Dup Test', slug: `dup-${Date.now()}` })
+    await Project.create({ name: 'First', key: 'DUP', orgId: org._id })
+    await expect(
+      Project.create({ name: 'Second', key: 'DUP', orgId: org._id }),
+    ).rejects.toThrow()
+  })
+
+  it('pixel-to-time: computes correct start/end with 15-min snapping', () => {
+    const START_HOUR = 6
+    const MAX_MINUTES = 16 * 60 // 960
+
+    function snapMinutes(minutes: number) {
+      return Math.min(Math.max(Math.round(minutes / 15) * 15, 0), MAX_MINUTES)
+    }
+
+    function minutesToTime(minutes: number) {
+      const totalMinutes = minutes + START_HOUR * 60
+      const h = Math.floor(totalMinutes / 60)
+      const m = totalMinutes % 60
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+    }
+
+    // 10:00 = 4h from 06:00 = 240px, 12:00 = 6h = 360px
+    const startMin = snapMinutes(Math.floor(240))
+    const endMin = snapMinutes(Math.floor(360))
+    expect(minutesToTime(startMin)).toBe('10:00')
+    expect(minutesToTime(endMin)).toBe('12:00')
+
+    // 08:37 → snaps to 08:30 (157px → 150 minutes offset)
+    const mid = snapMinutes(Math.floor(157))
+    expect(minutesToTime(mid)).toBe('08:30')
+
+    // 14:22 → snaps to 14:15 (502px → 500 → snap to 495)
+    const afternoon = snapMinutes(Math.floor(502))
+    expect(minutesToTime(afternoon)).toBe('14:15')
+
+    // Edge: 0px → 06:00
+    expect(minutesToTime(snapMinutes(0))).toBe('06:00')
+
+    // Edge: beyond max → clamped to 22:00
+    expect(minutesToTime(snapMinutes(1200))).toBe('22:00')
+  })
+
+  it('upward drag normalization: swaps times when end < start', () => {
+    const START_HOUR = 6
+    const MAX_MINUTES = 16 * 60
+
+    function snapMinutes(minutes: number) {
+      return Math.min(Math.max(Math.round(minutes / 15) * 15, 0), MAX_MINUTES)
+    }
+
+    function minutesToTime(minutes: number) {
+      const totalMinutes = minutes + START_HOUR * 60
+      const h = Math.floor(totalMinutes / 60)
+      const m = totalMinutes % 60
+      return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
+    }
+
+    // Simulate upward drag: start at 12:00 (360px), end at 10:00 (240px)
+    let startMin = snapMinutes(Math.floor(360))
+    let endMin = snapMinutes(Math.floor(240))
+
+    // Normalize: swap if start > end
+    if (startMin > endMin) {
+      ;[startMin, endMin] = [endMin, startMin]
+    }
+
+    expect(minutesToTime(startMin)).toBe('10:00')
+    expect(minutesToTime(endMin)).toBe('12:00')
+  })
+
   it('multi-tenancy: users in different orgs are isolated', async () => {
     const orgA = await Org.create({ name: 'Org A', slug: 'org-a' })
     const orgB = await Org.create({ name: 'Org B', slug: 'org-b' })

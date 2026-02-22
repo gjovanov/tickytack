@@ -97,9 +97,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import httpClient from '@/services/http-client'
+
+const showSnackbar = inject('showSnackbar')
 
 const route = useRoute()
 
@@ -136,7 +138,9 @@ async function checkout(planId) {
     const { data } = await httpClient.post('/stripe/checkout', { planId })
     if (data.url) window.location.href = data.url
   } catch (e) {
-    console.error('Checkout failed:', e)
+    const msg = e.response?.data?.message || e.message || 'Checkout failed'
+    console.error('Checkout failed:', msg)
+    showSnackbar(msg, 'error')
   } finally {
     checkoutLoading.value = null
   }

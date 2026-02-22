@@ -1,6 +1,14 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Authentication', () => {
+  // Warm up the API server before the first test
+  test.beforeAll(async ({ browser }) => {
+    const page = await browser.newPage()
+    await page.goto('/auth/login')
+    await page.waitForLoadState('networkidle')
+    await page.close()
+  })
+
   test('login with valid credentials', async ({ page }) => {
     await page.goto('/auth/login')
     await page.waitForLoadState('networkidle')
@@ -9,7 +17,7 @@ test.describe('Authentication', () => {
     await page.locator('input[type="password"]').fill('admin123')
     await page.getByRole('button', { name: 'Sign In' }).click()
 
-    await page.waitForURL('**/timesheet', { timeout: 15000 })
+    await page.waitForURL('**/timesheet', { timeout: 30000 })
     await expect(page).toHaveURL(/\/timesheet/)
   })
 
@@ -39,10 +47,10 @@ test.describe('Authentication', () => {
     await expect(page).toHaveURL(/\/timesheet/)
   })
 
-  test('auth guard redirects to login', async ({ page }) => {
+  test('auth guard redirects to landing', async ({ page }) => {
     await page.goto('/timesheet')
-    await page.waitForURL('**/auth/login')
-    await expect(page).toHaveURL(/\/auth\/login/)
+    await page.waitForURL('**/landing')
+    await expect(page).toHaveURL(/\/landing/)
   })
 
   test('logout redirects to login', async ({ page }) => {

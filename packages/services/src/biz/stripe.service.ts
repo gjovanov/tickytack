@@ -17,7 +17,13 @@ export const stripeService = {
     }
 
     const priceId = config.stripe.priceIds[planId as keyof typeof config.stripe.priceIds]
-    if (!priceId) throw new Error('Invalid plan')
+    if (!priceId) {
+      const validPlans = Object.keys(config.stripe.priceIds)
+      if (!validPlans.includes(planId)) {
+        throw new Error(`Invalid plan: "${planId}". Valid plans: ${validPlans.join(', ')}`)
+      }
+      throw new Error(`Stripe price ID not configured for plan "${planId}". Set STRIPE_PRICE_${planId.toUpperCase()} in .env`)
+    }
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,

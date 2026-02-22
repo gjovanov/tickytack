@@ -132,7 +132,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, inject, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTicketsStore } from '@/store/tickets'
 import { useProjectsStore } from '@/store/projects'
@@ -140,6 +140,7 @@ import { useProjectsStore } from '@/store/projects'
 const { t } = useI18n()
 const ticketsStore = useTicketsStore()
 const projectsStore = useProjectsStore()
+const showSnackbar = inject('showSnackbar')
 
 const dialog = ref(false)
 const editItem = ref(null)
@@ -213,21 +214,30 @@ async function handleSave() {
   const { valid } = await formRef.value.validate()
   if (!valid) return
 
-  if (editItem.value) {
-    const projectId = editItem.value.projectId?._id || editItem.value.projectId
-    await ticketsStore.updateTicket(projectId, editItem.value._id, form.value)
-  } else {
-    await ticketsStore.createTicket(selectedProjectIds.value[0], form.value)
+  try {
+    if (editItem.value) {
+      const projectId = editItem.value.projectId?._id || editItem.value.projectId
+      await ticketsStore.updateTicket(projectId, editItem.value._id, form.value)
+    } else {
+      await ticketsStore.createTicket(selectedProjectIds.value[0], form.value)
+    }
+    dialog.value = false
+    handleProjectChange(selectedProjectIds.value)
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Operation failed'
+    showSnackbar(msg, 'error')
   }
-  dialog.value = false
-  handleProjectChange(selectedProjectIds.value)
 }
 
 async function confirmDelete(item) {
-  if (confirm(t('messages.confirm.delete', { item: item.key }))) {
+  if (!confirm(t('messages.confirm.delete', { item: item.key }))) return
+  try {
     const projectId = item.projectId?._id || item.projectId
     await ticketsStore.deleteTicket(projectId, item._id)
     handleProjectChange(selectedProjectIds.value)
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Delete failed'
+    showSnackbar(msg, 'error')
   }
 }
 

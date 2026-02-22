@@ -1,5 +1,8 @@
 import { Elysia, t } from 'elysia'
 import { projectDao } from 'services/src/dao'
+import BadRequestError from '../../errors/BadRequestError'
+import NotFoundError from '../../errors/NotFoundError'
+import UnauthorizedError from '../../errors/UnauthorizedError'
 
 export const projectController = new Elysia({
   prefix: '/org/:orgId/project',
@@ -11,7 +14,7 @@ export const projectController = new Elysia({
     '/',
     async ({ params: { orgId }, body, user }) => {
       if (!user || (user.role !== 'admin' && user.role !== 'manager'))
-        throw new Error('Forbidden')
+        throw new UnauthorizedError('Forbidden')
 
       try {
         return await projectDao.create({
@@ -20,7 +23,7 @@ export const projectController = new Elysia({
         })
       } catch (err: any) {
         if (err.code === 11000) {
-          throw new Error(`Project with key "${body.key}" already exists`)
+          throw new BadRequestError(`Project with key "${body.key}" already exists`)
         }
         throw err
       }
@@ -37,17 +40,17 @@ export const projectController = new Elysia({
   )
   .get('/:projectId', async ({ params: { projectId } }) => {
     const project = await projectDao.findById(projectId)
-    if (!project) throw new Error('Project not found')
+    if (!project) throw new NotFoundError('Project not found')
     return project
   })
   .put(
     '/:projectId',
     async ({ params: { projectId }, body, user }) => {
       if (!user || (user.role !== 'admin' && user.role !== 'manager'))
-        throw new Error('Forbidden')
+        throw new UnauthorizedError('Forbidden')
 
       const project = await projectDao.update(projectId, body)
-      if (!project) throw new Error('Project not found')
+      if (!project) throw new NotFoundError('Project not found')
       return project
     },
     {
@@ -62,7 +65,7 @@ export const projectController = new Elysia({
     },
   )
   .delete('/:projectId', async ({ params: { projectId }, user }) => {
-    if (!user || user.role !== 'admin') throw new Error('Forbidden')
+    if (!user || user.role !== 'admin') throw new UnauthorizedError('Forbidden')
     await projectDao.delete(projectId)
     return { message: 'Project deleted' }
   })

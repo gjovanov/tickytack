@@ -17,6 +17,7 @@
           :current-date="timesheetStore.currentDate"
           :loading="timesheetStore.loading"
           @click-slot="openCreateDialog"
+          @drag-select="openCreateDialogWithRange"
           @click-entry="openEditDialog"
           @resize-entry="handleResize"
           @drop-entry="handleDrop"
@@ -27,6 +28,7 @@
           :week-start="timesheetStore.weekStart"
           :loading="timesheetStore.loading"
           @click-slot="openCreateDialog"
+          @drag-select="openCreateDialogWithRange"
           @click-entry="openEditDialog"
           @resize-entry="handleResize"
           @drop-entry="handleDrop"
@@ -58,6 +60,8 @@
       :prefilled-date="prefilledDate"
       :prefilled-hour="prefilledHour"
       :prefilled-ticket-id="prefilledTicketId"
+      :prefilled-start-time="prefilledStartTime"
+      :prefilled-end-time="prefilledEndTime"
       @save="handleSave"
       @delete="handleDelete"
     />
@@ -65,7 +69,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, inject, onMounted } from 'vue'
 import { useTimesheetStore } from '@/store/timesheet'
 import CalendarToolbar from '@/components/timesheet/CalendarToolbar.vue'
 import DailyCalendar from '@/components/timesheet/DailyCalendar.vue'
@@ -76,12 +80,15 @@ import RecentTickets from '@/components/timesheet/RecentTickets.vue'
 import TimeEntryDialog from '@/components/timesheet/TimeEntryDialog.vue'
 
 const timesheetStore = useTimesheetStore()
+const showSnackbar = inject('showSnackbar')
 
 const dialogOpen = ref(false)
 const selectedEntry = ref(null)
 const prefilledDate = ref(null)
 const prefilledHour = ref(null)
 const prefilledTicketId = ref(null)
+const prefilledStartTime = ref(null)
+const prefilledEndTime = ref(null)
 
 onMounted(() => {
   timesheetStore.fetchEntries()
@@ -92,6 +99,18 @@ function openCreateDialog({ date, hour }) {
   prefilledDate.value = date
   prefilledHour.value = hour
   prefilledTicketId.value = null
+  prefilledStartTime.value = null
+  prefilledEndTime.value = null
+  dialogOpen.value = true
+}
+
+function openCreateDialogWithRange({ date, startTime, endTime }) {
+  selectedEntry.value = null
+  prefilledDate.value = date
+  prefilledHour.value = null
+  prefilledTicketId.value = null
+  prefilledStartTime.value = startTime
+  prefilledEndTime.value = endTime
   dialogOpen.value = true
 }
 
@@ -100,6 +119,8 @@ function openEditDialog(entry) {
   prefilledDate.value = null
   prefilledHour.value = null
   prefilledTicketId.value = null
+  prefilledStartTime.value = null
+  prefilledEndTime.value = null
   dialogOpen.value = true
 }
 
@@ -117,27 +138,47 @@ function handleRecentTicketSelect(ticket) {
 }
 
 async function handleResize({ entry, endTime }) {
-  await timesheetStore.updateEntry(entry._id, {
-    startTime: entry.startTime,
-    endTime,
-  })
+  try {
+    await timesheetStore.updateEntry(entry._id, {
+      startTime: entry.startTime,
+      endTime,
+    })
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Update failed'
+    showSnackbar(msg, 'error')
+  }
 }
 
 async function handleDrop({ entryId, date, startTime, endTime }) {
-  await timesheetStore.updateEntry(entryId, { date, startTime, endTime })
+  try {
+    await timesheetStore.updateEntry(entryId, { date, startTime, endTime })
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Update failed'
+    showSnackbar(msg, 'error')
+  }
 }
 
 async function handleSave(data) {
-  if (data._id) {
-    await timesheetStore.updateEntry(data._id, data)
-  } else {
-    await timesheetStore.createEntry(data)
+  try {
+    if (data._id) {
+      await timesheetStore.updateEntry(data._id, data)
+    } else {
+      await timesheetStore.createEntry(data)
+    }
+    dialogOpen.value = false
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Operation failed'
+    showSnackbar(msg, 'error')
   }
-  dialogOpen.value = false
 }
 
 async function handleDelete(id) {
-  await timesheetStore.deleteEntry(id)
-  dialogOpen.value = false
+  try {
+    await timesheetStore.deleteEntry(id)
+    dialogOpen.value = false
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Delete failed'
+    showSnackbar(msg, 'error')
+  }
 }
 </script>

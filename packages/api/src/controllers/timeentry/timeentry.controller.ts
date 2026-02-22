@@ -1,11 +1,14 @@
 import { Elysia, t } from 'elysia'
 import { timeEntryDao, ticketDao } from 'services/src/dao'
+import BadRequestError from '../../errors/BadRequestError'
+import NotFoundError from '../../errors/NotFoundError'
+import UnauthorizedError from '../../errors/UnauthorizedError'
 
 export const timeentryController = new Elysia({
   prefix: '/org/:orgId/timeentry',
 })
   .get('/', async ({ params: { orgId }, query, user }) => {
-    if (!user) throw new Error('Unauthorized')
+    if (!user) throw new UnauthorizedError()
 
     const startDate = new Date(query.startDate)
     const endDate = new Date(query.endDate)
@@ -14,7 +17,7 @@ export const timeentryController = new Elysia({
     return timeEntryDao.findByUserAndDateRange(orgId, userId, startDate, endDate)
   })
   .get('/summary', async ({ params: { orgId }, query, user }) => {
-    if (!user) throw new Error('Unauthorized')
+    if (!user) throw new UnauthorizedError()
 
     const startDate = new Date(query.startDate)
     const endDate = new Date(query.endDate)
@@ -29,17 +32,17 @@ export const timeentryController = new Elysia({
   .post(
     '/',
     async ({ params: { orgId }, body, user }) => {
-      if (!user) throw new Error('Unauthorized')
+      if (!user) throw new UnauthorizedError()
 
       const ticket = await ticketDao.findById(body.ticketId)
-      if (!ticket) throw new Error('Ticket not found')
+      if (!ticket) throw new NotFoundError('Ticket not found')
 
       // Calculate duration from start/end time
       const [startH, startM] = body.startTime.split(':').map(Number)
       const [endH, endM] = body.endTime.split(':').map(Number)
       const durationMinutes = endH * 60 + endM - (startH * 60 + startM)
 
-      if (durationMinutes <= 0) throw new Error('End time must be after start time')
+      if (durationMinutes <= 0) throw new BadRequestError('End time must be after start time')
 
       return timeEntryDao.create({
         orgId: orgId as unknown as import('mongoose').Types.ObjectId,
@@ -66,7 +69,7 @@ export const timeentryController = new Elysia({
   .put(
     '/:id',
     async ({ params: { id }, body, user }) => {
-      if (!user) throw new Error('Unauthorized')
+      if (!user) throw new UnauthorizedError()
 
       const updateData: Record<string, unknown> = { ...body }
 
@@ -84,7 +87,7 @@ export const timeentryController = new Elysia({
       }
 
       const entry = await timeEntryDao.update(id, updateData)
-      if (!entry) throw new Error('Time entry not found')
+      if (!entry) throw new NotFoundError('Time entry not found')
       return entry
     },
     {
@@ -98,7 +101,7 @@ export const timeentryController = new Elysia({
     },
   )
   .delete('/:id', async ({ params: { id }, user }) => {
-    if (!user) throw new Error('Unauthorized')
+    if (!user) throw new UnauthorizedError()
     await timeEntryDao.delete(id)
     return { message: 'Time entry deleted' }
   })

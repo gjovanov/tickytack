@@ -7,6 +7,7 @@ import swagger from '@elysiajs/swagger'
 import { connectDB } from 'db/src/connection'
 import logger from 'services/src/logger/logger'
 
+import BadRequestError from './errors/BadRequestError'
 import NotFoundError from './errors/NotFoundError'
 import UnauthorizedError from './errors/UnauthorizedError'
 
@@ -76,6 +77,7 @@ const AuthService = new Elysia({ name: 'Service.Auth' })
 
 const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
   .error({
+    BadRequestError,
     NotFoundError,
     UnauthorizedError,
   })
@@ -85,7 +87,8 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
     let message: string
 
     switch (customCode) {
-      case 'VALIDATION': {
+      case 'VALIDATION':
+      case 'BadRequestError': {
         status = 400
         message = error.message
         break
@@ -166,14 +169,24 @@ for (const path of spaPaths) {
   app.get(path, () => Bun.file('../ui/dist/index.html'))
 }
 
-app.listen({
+// Use custom Bun.serve to normalize trailing slashes before Elysia routing
+app.compile()
+const server = Bun.serve({
   port,
   hostname,
   idleTimeout: 255,
+  fetch(request) {
+    const url = new URL(request.url)
+    if (!url.pathname.endsWith('/') && !url.pathname.includes('.')) {
+      url.pathname += '/'
+      return app.fetch(new Request(url, request))
+    }
+    return app.fetch(request)
+  },
 })
 
 logger.info(
-  `🦊 TickyTack API is running at http://${app.server?.hostname}:${app.server?.port}`,
+  `🦊 TickyTack API is running at http://${server.hostname}:${server.port}`,
 )
 
 export { app }

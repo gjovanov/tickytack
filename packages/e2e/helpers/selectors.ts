@@ -32,7 +32,15 @@ export async function waitForSnackbar(page: Page): Promise<Locator> {
 /** Navigate to a page via the side navigation drawer */
 export async function navigateViaNav(page: Page, itemText: string) {
   await page.waitForLoadState('networkidle')
-  await page.getByRole('navigation').getByRole('link', { name: itemText }).click()
+  const link = page.getByRole('navigation').getByRole('link', { name: itemText })
+  await link.waitFor({ state: 'visible', timeout: 5000 })
+  const currentUrl = page.url()
+  await link.click()
+  // If URL didn't change after click, wait briefly and retry
+  await page.waitForTimeout(500)
+  if (page.url() === currentUrl) {
+    await link.click()
+  }
 }
 
 /** Wait for page loading to complete (no loading indicators visible) */

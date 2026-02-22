@@ -8,9 +8,9 @@
     "dev:ui": "cd packages/ui && bun run dev",
     "build:ui": "cd packages/ui && bun run build",
     "start": "cd packages/api && bun run start",
-    "test": "bun test --env-file=.env.test --coverage --timeout 120000",
-    "test:e2e": "cd packages/e2e && bunx playwright test",
-    "test:e2e:ui": "cd packages/e2e && bunx playwright test --ui"
+    "test": "bun test --env-file=.env.test --coverage --timeout 120000 packages/tests packages/services packages/db packages/api",
+    "test:e2e": "cd packages/e2e && bun run seed && SKIP_SEED=1 PATH=$HOME/.local/node/bin:$PATH ./node_modules/.bin/playwright test",
+    "test:e2e:ui": "cd packages/e2e && bun run seed && SKIP_SEED=1 PATH=$HOME/.local/node/bin:$PATH ./node_modules/.bin/playwright test --ui"
   },
   "workspaces": [
     "packages/*"

@@ -1,5 +1,5 @@
 import { test, expect } from '../fixtures/auth.fixture'
-import { navigateViaNav, waitForLoad } from '../helpers/selectors'
+import { navigateViaNav, waitForLoad, waitForSnackbar } from '../helpers/selectors'
 
 test.describe('Projects', () => {
   test('list projects shows seeded data', async ({ authenticatedPage: page }) => {
@@ -38,6 +38,28 @@ test.describe('Projects', () => {
     // Verify new project appears in table
     await expect(page.getByRole('cell', { name: key, exact: true })).toBeVisible()
     await expect(page.getByText('Test Project')).toBeVisible()
+  })
+
+  test('create project with duplicate key shows error snackbar', async ({ authenticatedPage: page }) => {
+    await navigateViaNav(page, 'Projects')
+    await page.waitForURL('**/admin/projects')
+    await waitForLoad(page)
+
+    // Try to create project with existing key "PCLASS"
+    await page.getByRole('button', { name: 'Create Project' }).click()
+    const dialog = page.locator('.v-dialog')
+    await expect(dialog).toBeVisible()
+
+    await dialog.getByLabel('Project Name').fill('Duplicate Test')
+    await dialog.getByLabel('Key').fill('PCLASS')
+    await dialog.getByRole('button', { name: 'Save' }).click()
+
+    // Error snackbar should appear
+    const snackbar = await waitForSnackbar(page)
+    await expect(snackbar).toContainText('already exists')
+
+    // Dialog should remain open (not closed on error)
+    await expect(dialog).toBeVisible()
   })
 
   test('edit project', async ({ authenticatedPage: page }) => {

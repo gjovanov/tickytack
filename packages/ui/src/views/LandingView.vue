@@ -1,5 +1,5 @@
 <template>
-  <v-app>
+  <v-app theme="light">
   <div class="landing-page">
     <!-- Navbar -->
     <v-app-bar flat color="transparent" class="landing-nav">
@@ -19,7 +19,7 @@
         <v-row align="center" justify="center">
           <v-col cols="12" md="8" class="text-center">
             <h1 class="text-h2 font-weight-bold mb-4">Track time. Ship projects.<br/><span class="text-primary">Get paid.</span></h1>
-            <p class="text-h6 text-medium-emphasis mb-8">Drag-and-drop time tracking, project management, and smart exports — built for freelancers and teams who bill by the hour.</p>
+            <p class="text-h6 landing-muted mb-8">Drag-and-drop time tracking, project management, and smart exports — built for freelancers and teams who bill by the hour.</p>
             <v-btn color="primary" size="x-large" :to="{ name: 'auth.register' }" class="mr-4 px-8">Start Free</v-btn>
             <v-btn variant="outlined" size="x-large" href="#pricing" class="px-8">View Plans</v-btn>
           </v-col>
@@ -30,11 +30,11 @@
     <!-- Trust bar -->
     <section class="trust-section py-8">
       <v-container>
-        <p class="text-center text-body-2 text-medium-emphasis mb-4">Trusted by freelancers and teams worldwide</p>
+        <p class="text-center text-body-2 landing-muted mb-4">Trusted by freelancers and teams worldwide</p>
         <v-row justify="center" align="center">
           <v-col v-for="stat in stats" :key="stat.label" cols="6" sm="3" class="text-center">
             <div class="text-h4 font-weight-bold text-primary">{{ stat.value }}</div>
-            <div class="text-body-2 text-medium-emphasis">{{ stat.label }}</div>
+            <div class="text-body-2 landing-muted">{{ stat.label }}</div>
           </v-col>
         </v-row>
       </v-container>
@@ -44,13 +44,13 @@
     <section id="features" class="features-section py-16">
       <v-container>
         <h2 class="text-h3 text-center font-weight-bold mb-2">Everything you need to stay on track</h2>
-        <p class="text-center text-body-1 text-medium-emphasis mb-12">From time entries to exports, all in one place</p>
+        <p class="text-center text-body-1 landing-muted mb-12">From time entries to exports, all in one place</p>
         <v-row>
           <v-col v-for="feature in features" :key="feature.title" cols="12" sm="6" md="4">
             <v-card variant="outlined" class="feature-card pa-6 h-100" rounded="lg">
               <v-icon :color="feature.color" size="48" class="mb-4">{{ feature.icon }}</v-icon>
               <h3 class="text-h6 font-weight-bold mb-2">{{ feature.title }}</h3>
-              <p class="text-body-2 text-medium-emphasis">{{ feature.description }}</p>
+              <p class="text-body-2 landing-muted">{{ feature.description }}</p>
             </v-card>
           </v-col>
         </v-row>
@@ -61,7 +61,7 @@
     <section id="pricing" class="pricing-section py-16">
       <v-container>
         <h2 class="text-h3 text-center font-weight-bold mb-2">Simple, transparent pricing</h2>
-        <p class="text-center text-body-1 text-medium-emphasis mb-12">Start free, scale as you grow</p>
+        <p class="text-center text-body-1 landing-muted mb-12">Start free, scale as you grow</p>
         <v-row justify="center">
           <v-col v-for="plan in plans" :key="plan.name" cols="12" sm="6" md="4">
             <v-card
@@ -75,8 +75,8 @@
               <h3 class="text-h5 font-weight-bold">{{ plan.name }}</h3>
               <div class="my-4">
                 <span class="text-h3 font-weight-bold">${{ plan.price }}</span>
-                <span v-if="plan.price > 0" class="text-body-2 text-medium-emphasis">/user/mo</span>
-                <span v-else class="text-body-2 text-medium-emphasis">forever</span>
+                <span v-if="plan.price > 0" class="text-body-2 landing-muted">/user/mo</span>
+                <span v-else class="text-body-2 landing-muted">forever</span>
               </div>
               <v-divider class="mb-4" />
               <v-list density="compact" class="flex-grow-1 bg-transparent">
@@ -117,28 +117,28 @@
         <v-row>
           <v-col cols="12" sm="4">
             <div class="text-h6 font-weight-bold mb-2">TickyTack</div>
-            <p class="text-body-2 text-medium-emphasis">Time tracking and project management for modern teams.</p>
+            <p class="text-body-2 landing-muted">Time tracking and project management for modern teams.</p>
           </v-col>
           <v-col cols="6" sm="2">
             <div class="text-subtitle-2 font-weight-bold mb-2">Product</div>
-            <div class="text-body-2 text-medium-emphasis mb-1">Features</div>
-            <div class="text-body-2 text-medium-emphasis mb-1">Pricing</div>
-            <div class="text-body-2 text-medium-emphasis mb-1">Security</div>
+            <div class="text-body-2 landing-muted mb-1">Features</div>
+            <div class="text-body-2 landing-muted mb-1">Pricing</div>
+            <div class="text-body-2 landing-muted mb-1">Security</div>
           </v-col>
           <v-col cols="6" sm="2">
             <div class="text-subtitle-2 font-weight-bold mb-2">Company</div>
-            <div class="text-body-2 text-medium-emphasis mb-1">About</div>
-            <div class="text-body-2 text-medium-emphasis mb-1">Blog</div>
-            <div class="text-body-2 text-medium-emphasis mb-1">Careers</div>
+            <div class="text-body-2 landing-muted mb-1">About</div>
+            <div class="text-body-2 landing-muted mb-1">Blog</div>
+            <div class="text-body-2 landing-muted mb-1">Careers</div>
           </v-col>
           <v-col cols="12" sm="4">
             <div class="text-subtitle-2 font-weight-bold mb-2">Legal</div>
-            <div class="text-body-2 text-medium-emphasis mb-1">Privacy Policy</div>
-            <div class="text-body-2 text-medium-emphasis mb-1">Terms of Service</div>
+            <div class="text-body-2 landing-muted mb-1">Privacy Policy</div>
+            <div class="text-body-2 landing-muted mb-1">Terms of Service</div>
           </v-col>
         </v-row>
         <v-divider class="my-4" />
-        <div class="text-body-2 text-medium-emphasis text-center">&copy; {{ new Date().getFullYear() }} TickyTack. All rights reserved.</div>
+        <div class="text-body-2 landing-muted text-center">&copy; {{ new Date().getFullYear() }} TickyTack. All rights reserved.</div>
       </v-container>
     </v-footer>
   </div>
@@ -237,14 +237,16 @@ const plans = [
 <style scoped>
 .landing-page {
   background: linear-gradient(180deg, #fffaf5 0%, #ffffff 40%);
+  color: #1e1a17;
 }
 
 .landing-nav {
   position: fixed !important;
   z-index: 100;
   backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.85) !important;
-  border-bottom: 1px solid rgba(245, 124, 0, 0.08);
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-bottom: 1px solid rgba(245, 124, 0, 0.1);
+  color: #1e1a17 !important;
 }
 
 .hero-section {
@@ -324,5 +326,22 @@ const plans = [
 .landing-footer {
   background: #fafafa !important;
   border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.landing-muted {
+  color: rgba(30, 26, 23, 0.7) !important;
+}
+
+.landing-page :deep(.v-card) {
+  background-color: #ffffff !important;
+  color: #1e1a17 !important;
+}
+
+.landing-page :deep(.v-list) {
+  color: #1e1a17 !important;
+}
+
+.landing-page :deep(.v-footer) {
+  color: #1e1a17 !important;
 }
 </style>

@@ -117,6 +117,8 @@ const props = defineProps({
   prefilledDate: { type: String, default: null },
   prefilledHour: { type: Number, default: null },
   prefilledTicketId: { type: String, default: null },
+  prefilledStartTime: { type: String, default: null },
+  prefilledEndTime: { type: String, default: null },
 })
 
 const emit = defineEmits(['update:modelValue', 'save', 'delete'])
@@ -176,12 +178,14 @@ watch(
         form.value = {
           ticketId: props.prefilledTicketId || '',
           date: props.prefilledDate || format(new Date(), 'yyyy-MM-dd'),
-          startTime: props.prefilledHour != null
-            ? `${props.prefilledHour.toString().padStart(2, '0')}:00`
-            : '09:00',
-          endTime: props.prefilledHour != null
-            ? `${(props.prefilledHour + 1).toString().padStart(2, '0')}:00`
-            : '10:00',
+          startTime: props.prefilledStartTime
+            || (props.prefilledHour != null
+              ? `${props.prefilledHour.toString().padStart(2, '0')}:00`
+              : '09:00'),
+          endTime: props.prefilledEndTime
+            || (props.prefilledHour != null
+              ? `${(props.prefilledHour + 1).toString().padStart(2, '0')}:00`
+              : '10:00'),
           description: '',
         }
         loadInitialTickets()

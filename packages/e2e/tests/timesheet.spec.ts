@@ -185,6 +185,139 @@ test.describe('Timesheet', () => {
     }
   })
 
+  test('click-drag creates entry with correct duration', async ({ authenticatedPage: page }) => {
+    await expect(page).toHaveURL(/\/timesheet/)
+    await page.waitForLoadState('networkidle')
+
+    // Switch to daily view for a single column
+    await page.getByRole('button', { name: 'Daily' }).click()
+    await expect(page.locator('.daily-calendar')).toBeVisible({ timeout: 5000 })
+
+    const column = page.locator('.daily-column')
+    const box = await column.boundingBox()
+    if (!box) return
+
+    // 10:00 = 4h from 06:00 = 240px from column top
+    // 12:00 = 6h from 06:00 = 360px from column top
+    const startY = box.y + 240
+    const endY = box.y + 360
+    const centerX = box.x + box.width / 2
+
+    await page.mouse.move(centerX, startY)
+    await page.mouse.down()
+    await page.mouse.move(centerX, endY, { steps: 10 })
+    await page.mouse.up()
+
+    // Dialog should open with the dragged time range
+    const dialog = page.locator('.v-dialog')
+    await expect(dialog).toBeVisible({ timeout: 5000 })
+
+    const startTimeInput = dialog.locator('input[type="time"]').first()
+    const endTimeInput = dialog.locator('input[type="time"]').nth(1)
+    await expect(startTimeInput).toHaveValue('10:00')
+    await expect(endTimeInput).toHaveValue('12:00')
+
+    // Close dialog
+    await dialog.getByRole('button', { name: /cancel/i }).click()
+  })
+
+  test('upward drag normalizes to correct time range', async ({ authenticatedPage: page }) => {
+    await expect(page).toHaveURL(/\/timesheet/)
+    await page.waitForLoadState('networkidle')
+
+    await page.getByRole('button', { name: 'Daily' }).click()
+    await expect(page.locator('.daily-calendar')).toBeVisible({ timeout: 5000 })
+
+    const column = page.locator('.daily-column')
+    const box = await column.boundingBox()
+    if (!box) return
+
+    // Drag UP: start at 12:00 (360px), drag to 10:00 (240px)
+    const startY = box.y + 360
+    const endY = box.y + 240
+    const centerX = box.x + box.width / 2
+
+    await page.mouse.move(centerX, startY)
+    await page.mouse.down()
+    await page.mouse.move(centerX, endY, { steps: 10 })
+    await page.mouse.up()
+
+    const dialog = page.locator('.v-dialog')
+    await expect(dialog).toBeVisible({ timeout: 5000 })
+
+    // Times should be normalized: startTime < endTime
+    const startTimeInput = dialog.locator('input[type="time"]').first()
+    const endTimeInput = dialog.locator('input[type="time"]').nth(1)
+    await expect(startTimeInput).toHaveValue('10:00')
+    await expect(endTimeInput).toHaveValue('12:00')
+
+    await dialog.getByRole('button', { name: /cancel/i }).click()
+  })
+
+  test('short click still opens 1h dialog', async ({ authenticatedPage: page }) => {
+    await expect(page).toHaveURL(/\/timesheet/)
+    await page.waitForLoadState('networkidle')
+
+    await page.getByRole('button', { name: 'Daily' }).click()
+    await expect(page.locator('.daily-calendar')).toBeVisible({ timeout: 5000 })
+
+    const column = page.locator('.daily-column')
+    const box = await column.boundingBox()
+    if (!box) return
+
+    // Quick click at 10:00 (240px offset) — no drag
+    const clickY = box.y + 240
+    const centerX = box.x + box.width / 2
+
+    await page.mouse.click(centerX, clickY)
+
+    const dialog = page.locator('.v-dialog')
+    await expect(dialog).toBeVisible({ timeout: 5000 })
+
+    // Should default to 1h: 10:00-11:00
+    const startTimeInput = dialog.locator('input[type="time"]').first()
+    const endTimeInput = dialog.locator('input[type="time"]').nth(1)
+    await expect(startTimeInput).toHaveValue('10:00')
+    await expect(endTimeInput).toHaveValue('11:00')
+
+    await dialog.getByRole('button', { name: /cancel/i }).click()
+  })
+
+  test('visual preview appears during drag', async ({ authenticatedPage: page }) => {
+    await expect(page).toHaveURL(/\/timesheet/)
+    await page.waitForLoadState('networkidle')
+
+    await page.getByRole('button', { name: 'Daily' }).click()
+    await expect(page.locator('.daily-calendar')).toBeVisible({ timeout: 5000 })
+
+    const column = page.locator('.daily-column')
+    const box = await column.boundingBox()
+    if (!box) return
+
+    const startY = box.y + 240
+    const centerX = box.x + box.width / 2
+
+    await page.mouse.move(centerX, startY)
+    await page.mouse.down()
+    // Move enough to trigger drag (>5px threshold)
+    await page.mouse.move(centerX, startY + 60, { steps: 5 })
+
+    // Preview should be visible while dragging
+    await expect(page.locator('.drag-preview')).toBeVisible()
+
+    // Release
+    await page.mouse.up()
+
+    // Preview should disappear after release
+    await expect(page.locator('.drag-preview')).toBeHidden()
+
+    // Close any dialog that opened
+    const dialog = page.locator('.v-dialog')
+    if (await dialog.isVisible()) {
+      await dialog.getByRole('button', { name: /cancel/i }).click()
+    }
+  })
+
   test('delete time entry removes card', async ({ authenticatedPage: page }) => {
     await page.waitForLoadState('networkidle')
 

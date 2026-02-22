@@ -77,11 +77,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, inject, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import httpClient from '@/services/http-client'
 
 const { t } = useI18n()
+const showSnackbar = inject('showSnackbar')
 
 const orgs = ref([])
 const loading = ref(false)
@@ -128,23 +129,37 @@ async function handleSave() {
   const { valid } = await formRef.value.validate()
   if (!valid) return
 
-  if (editItem.value) {
-    await httpClient.put(`/org/${editItem.value._id}`, {
-      name: form.value.name,
-      description: form.value.description,
-      settings: form.value.settings,
-    })
-  } else {
-    // Create via register flow - orgs are created during registration
+  try {
+    if (editItem.value) {
+      await httpClient.put(`/org/${editItem.value._id}`, {
+        name: form.value.name,
+        description: form.value.description,
+        settings: form.value.settings,
+      })
+    } else {
+      await httpClient.post('/org', {
+        name: form.value.name,
+        slug: form.value.slug,
+        description: form.value.description,
+        settings: form.value.settings,
+      })
+    }
+    dialog.value = false
+    fetchOrgs()
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Operation failed'
+    showSnackbar(msg, 'error')
   }
-  dialog.value = false
-  fetchOrgs()
 }
 
 async function confirmDelete(item) {
-  if (confirm(t('messages.confirm.delete', { item: item.name }))) {
+  if (!confirm(t('messages.confirm.delete', { item: item.name }))) return
+  try {
     await httpClient.delete(`/org/${item._id}`)
     fetchOrgs()
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Delete failed'
+    showSnackbar(msg, 'error')
   }
 }
 

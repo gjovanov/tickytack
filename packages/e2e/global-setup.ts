@@ -168,3 +168,8 @@ async function globalSetup() {
 }
 
 export default globalSetup
+
+// Allow running directly via `bun run global-setup.ts`
+if (import.meta.main) {
+  await globalSetup()
+}

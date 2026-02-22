@@ -1,5 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { timeEntryDao } from 'services/src/dao'
+import BadRequestError from '../../errors/BadRequestError'
+import UnauthorizedError from '../../errors/UnauthorizedError'
 import { generateTimesheetXLSX } from 'reporting/excel/timesheet.excel'
 import { generateTimesheetPDF } from 'reporting/pdf/timesheet.pdf'
 
@@ -17,7 +19,7 @@ export const exportController = new Elysia({
   .post(
     '/excel',
     async ({ params: { orgId }, body, user, set }) => {
-      if (!user) throw new Error('Unauthorized')
+      if (!user) throw new UnauthorizedError()
 
       const startDate = new Date(body.startDate)
       const endDate = new Date(body.endDate)
@@ -38,7 +40,7 @@ export const exportController = new Elysia({
       }, body.descriptionOverrides || {})
 
       if (!buffer) {
-        throw new Error('No data to export')
+        throw new BadRequestError('No data to export')
       }
 
       set.headers['content-type'] =
@@ -53,7 +55,7 @@ export const exportController = new Elysia({
   .post(
     '/pdf',
     async ({ params: { orgId }, body, user, set }) => {
-      if (!user) throw new Error('Unauthorized')
+      if (!user) throw new UnauthorizedError()
 
       const startDate = new Date(body.startDate)
       const endDate = new Date(body.endDate)
@@ -74,7 +76,7 @@ export const exportController = new Elysia({
       }, body.descriptionOverrides || {})
 
       if (!buffer) {
-        throw new Error('No data to export')
+        throw new BadRequestError('No data to export')
       }
 
       set.headers['content-type'] = 'application/pdf'

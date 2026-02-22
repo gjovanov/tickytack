@@ -1,5 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { ticketDao, projectDao } from 'services/src/dao'
+import NotFoundError from '../../errors/NotFoundError'
+import UnauthorizedError from '../../errors/UnauthorizedError'
 
 export const ticketController = new Elysia({
   prefix: '/org/:orgId/project/:projectId/ticket',
@@ -10,10 +12,10 @@ export const ticketController = new Elysia({
   .post(
     '/',
     async ({ params: { orgId, projectId }, body, user }) => {
-      if (!user) throw new Error('Unauthorized')
+      if (!user) throw new UnauthorizedError()
 
       const project = await projectDao.findById(projectId)
-      if (!project) throw new Error('Project not found')
+      if (!project) throw new NotFoundError('Project not found')
 
       const seqNum = await ticketDao.getNextSequenceNumber(projectId)
       const key = `${project.key}-${seqNum}`
@@ -55,14 +57,14 @@ export const ticketController = new Elysia({
   )
   .get('/:ticketId', async ({ params: { ticketId } }) => {
     const ticket = await ticketDao.findById(ticketId)
-    if (!ticket) throw new Error('Ticket not found')
+    if (!ticket) throw new NotFoundError('Ticket not found')
     return ticket
   })
   .put(
     '/:ticketId',
     async ({ params: { ticketId }, body }) => {
       const ticket = await ticketDao.update(ticketId, body)
-      if (!ticket) throw new Error('Ticket not found')
+      if (!ticket) throw new NotFoundError('Ticket not found')
       return ticket
     },
     {
@@ -92,7 +94,7 @@ export const ticketController = new Elysia({
     },
   )
   .delete('/:ticketId', async ({ params: { ticketId }, user }) => {
-    if (!user) throw new Error('Unauthorized')
+    if (!user) throw new UnauthorizedError()
     await ticketDao.delete(ticketId)
     return { message: 'Ticket deleted' }
   })

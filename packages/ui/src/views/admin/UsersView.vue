@@ -112,13 +112,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, inject, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/store/app'
 import httpClient from '@/services/http-client'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const showSnackbar = inject('showSnackbar')
 
 const users = ref([])
 const loading = ref(false)
@@ -183,19 +184,28 @@ async function handleSave() {
   const payload = { ...form.value }
   if (!payload.password) delete payload.password
 
-  if (editItem.value) {
-    await httpClient.put(`/org/${appStore.currentOrg.id}/user/${editItem.value._id}`, payload)
-  } else {
-    await httpClient.post(`/org/${appStore.currentOrg.id}/user`, payload)
+  try {
+    if (editItem.value) {
+      await httpClient.put(`/org/${appStore.currentOrg.id}/user/${editItem.value._id}`, payload)
+    } else {
+      await httpClient.post(`/org/${appStore.currentOrg.id}/user`, payload)
+    }
+    dialog.value = false
+    fetchUsers()
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Operation failed'
+    showSnackbar(msg, 'error')
   }
-  dialog.value = false
-  fetchUsers()
 }
 
 async function confirmDelete(item) {
-  if (confirm(t('messages.confirm.delete', { item: item.username }))) {
+  if (!confirm(t('messages.confirm.delete', { item: item.username }))) return
+  try {
     await httpClient.delete(`/org/${appStore.currentOrg.id}/user/${item._id}`)
     fetchUsers()
+  } catch (err) {
+    const msg = err.response?.data?.message || err.message || 'Delete failed'
+    showSnackbar(msg, 'error')
   }
 }
 

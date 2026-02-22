@@ -9,8 +9,12 @@ export const stripeController = new Elysia({ prefix: '/stripe' })
   .post('/checkout', async ({ body, user, error }) => {
     if (!user) return error(401, { message: 'Unauthorized' })
     if (user.role !== 'admin') return error(403, { message: 'Admin only' })
-    const result = await stripeService.createCheckoutSession(user.orgId, body.planId, user.email)
-    return result
+    try {
+      const result = await stripeService.createCheckoutSession(user.orgId, body.planId, user.email)
+      return result
+    } catch (err: any) {
+      return error(400, { message: err.message })
+    }
   }, {
     isSignIn: true,
     body: t.Object({ planId: t.String() }),

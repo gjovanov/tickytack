@@ -20,5 +20,6 @@ export default {
     submit: 'Konto erstellen',
     hasAccount: 'Bereits ein Konto?',
     loginLink: 'Hier anmelden',
+    orRegisterWith: 'Oder registrieren mit',
   },
 }
