@@ -31,6 +31,7 @@ const hostname = process.env.HOST || 'localhost'
 
 // SPA paths that should serve index.html
 const spaPaths = [
+  '/',
   '/landing',
   '/auth/login',
   '/auth/register',
