@@ -35,9 +35,9 @@ test.describe('Projects', () => {
     await dialog.getByRole('button', { name: 'Save' }).click()
     await expect(dialog).toBeHidden({ timeout: 5000 })
 
-    // Verify new project appears in table
+    // Verify new project appears in table (use .first() since previous runs may leave "Test Project" entries)
     await expect(page.getByRole('cell', { name: key, exact: true })).toBeVisible()
-    await expect(page.getByText('Test Project')).toBeVisible()
+    await expect(page.getByText('Test Project').first()).toBeVisible()
   })
 
   test('create project with duplicate key shows error snackbar', async ({ authenticatedPage: page }) => {

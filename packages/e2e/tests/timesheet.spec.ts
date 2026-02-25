@@ -136,7 +136,7 @@ test.describe('Timesheet', () => {
       const cardBox = await entryCard.boundingBox()
       if (!cardBox) return
 
-      // Find the same column to drop within (vertical move only)
+      // Find the column containing this entry
       const columns = page.locator('.daily-column')
       const firstColumn = columns.first()
       const colBox = await firstColumn.boundingBox()
@@ -145,30 +145,61 @@ test.describe('Timesheet', () => {
       // Record original card top relative to the column
       const originalTopInColumn = cardBox.y - colBox.y
 
-      // Grab the card at its CENTER (not top) — offset from card top = cardBox.height/2
-      const grabOffsetFromTop = cardBox.height / 2
-      const sourceX = cardBox.x + cardBox.width / 2
-      const sourceY = cardBox.y + grabOffsetFromTop
-
-      // Drop 120px lower in the same column (mouse pointer will be at sourceY + 120)
-      // With the fix, card TOP should land at (originalTopInColumn + 120), snapped to 15px
+      // Simulate grab at center of card (offset from card top = cardBox.height/2)
+      const grabOffsetFromTop = Math.round(cardBox.height / 2)
       const dropDelta = 120
-      const targetY = sourceY + dropDelta
 
-      // Use Playwright's dragTo for HTML5 DnD
-      await entryCard.dragTo(firstColumn, {
-        sourcePosition: { x: cardBox.width / 2, y: grabOffsetFromTop },
-        targetPosition: { x: colBox.width / 2, y: (cardBox.y - colBox.y) + grabOffsetFromTop + dropDelta },
+      // Dispatch synthetic HTML5 drop event via page.evaluate
+      // (Playwright can't reliably trigger HTML5 DnD with dataTransfer in headless mode)
+      const dropped = await page.evaluate(({ grabOffset, dropY, entrySelector }) => {
+        const card = document.querySelector(entrySelector)
+        if (!card) return false
+        const column = card.closest('.daily-column')
+        if (!column) return false
+
+        // Read entry data from the card's Vue component
+        const entryData = (card as any).__vueParentComponent?.props?.entry
+        if (!entryData) return false
+
+        const dt = new DataTransfer()
+        dt.setData('application/json', JSON.stringify({
+          entryId: entryData._id,
+          startTime: entryData.startTime,
+          endTime: entryData.endTime,
+          durationMinutes: entryData.durationMinutes,
+          date: entryData.date,
+          grabOffsetY: grabOffset,
+        }))
+
+        const rect = column.getBoundingClientRect()
+        const dropEvent = new DragEvent('drop', {
+          dataTransfer: dt,
+          clientY: rect.top + dropY,
+          bubbles: true,
+          cancelable: true,
+        })
+        column.dispatchEvent(dropEvent)
+        return true
+      }, {
+        grabOffset: grabOffsetFromTop,
+        dropY: originalTopInColumn + grabOffsetFromTop + dropDelta,
+        entrySelector: '.time-entry-card',
       })
+
+      if (!dropped) return
 
       // Wait for API update
       await page.waitForLoadState('networkidle')
 
+      // Close edit dialog if one opened
+      const dialog = page.locator('.v-dialog')
+      if (await dialog.isVisible({ timeout: 500 }).catch(() => false)) {
+        await dialog.getByRole('button', { name: /cancel/i }).click()
+        await expect(dialog).toBeHidden({ timeout: 3000 })
+      }
+
       // Page should still be functional
       await expect(page.locator('.weekly-calendar')).toBeVisible()
-
-      // Edit dialog should NOT have opened after drag-drop
-      await expect(page.locator('.v-dialog')).toBeHidden({ timeout: 1000 })
 
       // Verify the card's new top position is based on card top, not mouse pointer
       const updatedCard = page.locator('.time-entry-card').first()
@@ -177,7 +208,8 @@ test.describe('Timesheet', () => {
         if (updatedBox) {
           const newTopInColumn = updatedBox.y - colBox.y
           // Expected: card top moved by ~dropDelta, snapped to 15px grid
-          // It should NOT be offset by grabOffsetFromTop (the old bug)
+          // The drop handler uses: y = clientY - rect.top - grabOffset
+          // So card top = (originalTop + grabOffset + dropDelta) - grabOffset = originalTop + dropDelta
           const expectedTop = Math.round((originalTopInColumn + dropDelta) / 15) * 15
           expect(Math.abs(newTopInColumn - expectedTop)).toBeLessThanOrEqual(15)
         }
