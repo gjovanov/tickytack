@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const isRemote = !!process.env.BASE_URL
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
@@ -9,7 +11,7 @@ export default defineConfig({
   reporter: 'html',
   globalSetup: process.env.SKIP_SEED ? undefined : './global-setup.ts',
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
@@ -19,18 +21,20 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: [
-    {
-      command: 'bun run --env-file=../../.env --cwd ../api src/index.ts',
-      port: 3001,
-      reuseExistingServer: !process.env.CI,
-      timeout: 30000,
-    },
-    {
-      command: 'bun run --cwd ../ui dev',
-      port: 3000,
-      reuseExistingServer: !process.env.CI,
-      timeout: 30000,
-    },
-  ],
+  ...(!isRemote && {
+    webServer: [
+      {
+        command: 'bun run --env-file=../../.env --cwd ../api src/index.ts',
+        port: 3001,
+        reuseExistingServer: !process.env.CI,
+        timeout: 30000,
+      },
+      {
+        command: 'bun run --cwd ../ui dev',
+        port: 3000,
+        reuseExistingServer: !process.env.CI,
+        timeout: 30000,
+      },
+    ],
+  }),
 })

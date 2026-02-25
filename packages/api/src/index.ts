@@ -2,6 +2,7 @@ import { Elysia } from 'elysia'
 import { jwt } from '@elysiajs/jwt'
 import { cors } from '@elysiajs/cors'
 import { staticPlugin } from '@elysiajs/static'
+import { resolve } from 'path'
 import swagger from '@elysiajs/swagger'
 
 import { connectDB } from 'db/src/connection'
@@ -160,7 +161,7 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
   )
   .use(
     staticPlugin({
-      assets: '../ui/dist',
+      assets: resolve('../ui/dist'),
       prefix: '',
     }),
   )

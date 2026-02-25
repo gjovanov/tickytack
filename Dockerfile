@@ -6,6 +6,8 @@ ENV PORT=3001
 COPY . /app
 WORKDIR /app
 
+ENV VITE_BACKEND_URL=""
+
 RUN bun install && \
     cd /app/packages/ui && \
     bun run build
