@@ -47,6 +47,8 @@ const spaPaths = [
   '/admin/invites',
   '/admin/billing',
   '/export',
+  '/privacy',
+  '/terms',
 ]
 
 // Connect to MongoDB
