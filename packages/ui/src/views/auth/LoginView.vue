@@ -91,8 +91,10 @@ import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/store/app'
 import { useI18n } from 'vue-i18n'
+import { useValidation } from '@/composables/useValidation'
 
 const { t } = useI18n()
+const { rules } = useValidation()
 const router = useRouter()
 const route = useRoute()
 const appStore = useAppStore()
@@ -116,9 +118,7 @@ const oauthProviders = [
   { name: 'microsoft', label: 'Microsoft', icon: 'mdi-microsoft', color: '#00A4EF' },
 ]
 
-const rules = {
-  required: (v) => !!v || t('validation.required', { field: '' }),
-}
+// rules provided by useValidation composable
 
 onMounted(() => {
   const invite = route.query.invite

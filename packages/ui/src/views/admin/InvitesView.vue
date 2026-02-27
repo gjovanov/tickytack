@@ -63,11 +63,13 @@
             <v-radio label="Email Invite" value="email" />
           </v-radio-group>
 
+          <v-form ref="formRef">
           <template v-if="createMode === 'email'">
             <v-text-field
               v-model="createForm.targetEmail"
               label="Target Email"
               type="email"
+              :rules="[rules.required, rules.email]"
               variant="outlined"
               density="compact"
             />
@@ -98,6 +100,7 @@
             variant="outlined"
             density="compact"
           />
+          </v-form>
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -107,19 +110,21 @@
       </v-card>
     </v-dialog>
 
-    <v-snackbar v-model="copySnackbar" :timeout="2000" color="success">
-      Invite link copied to clipboard!
-    </v-snackbar>
   </v-container>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useInviteStore } from '@/store/invite'
+import { useSnackbar } from '@/composables/useSnackbar'
+import { useValidation } from '@/composables/useValidation'
 
 const inviteStore = useInviteStore()
+const { showSuccess, showError } = useSnackbar()
+const { rules } = useValidation()
+
+const formRef = ref(null)
 const showCreateDialog = ref(false)
-const copySnackbar = ref(false)
 const createMode = ref('link')
 
 const createForm = reactive({
@@ -146,29 +151,43 @@ function statusColor(status) {
 function copyLink(code) {
   const url = `${window.location.origin}/invite/${code}`
   navigator.clipboard.writeText(url)
-  copySnackbar.value = true
+  showSuccess('Invite link copied to clipboard')
 }
 
 async function handleCreate() {
-  const params = { assignRole: createForm.assignRole }
-  if (createMode.value === 'email') {
-    params.targetEmail = createForm.targetEmail
-  } else if (createForm.maxUses) {
-    params.maxUses = createForm.maxUses
+  if (formRef.value) {
+    const { valid } = await formRef.value.validate()
+    if (!valid) return
   }
-  if (createForm.expiresInHours) {
-    params.expiresInHours = createForm.expiresInHours
+  try {
+    const params = { assignRole: createForm.assignRole }
+    if (createMode.value === 'email') {
+      params.targetEmail = createForm.targetEmail
+    } else if (createForm.maxUses) {
+      params.maxUses = createForm.maxUses
+    }
+    if (createForm.expiresInHours) {
+      params.expiresInHours = createForm.expiresInHours
+    }
+    await inviteStore.createInvite(params)
+    showCreateDialog.value = false
+    createForm.targetEmail = ''
+    createForm.maxUses = null
+    createForm.expiresInHours = null
+    createForm.assignRole = 'member'
+    showSuccess('Invite created')
+  } catch (err) {
+    showError(err.response?.data?.message || err.message || 'Failed to create invite')
   }
-  await inviteStore.createInvite(params)
-  showCreateDialog.value = false
-  createForm.targetEmail = ''
-  createForm.maxUses = null
-  createForm.expiresInHours = null
-  createForm.assignRole = 'member'
 }
 
 async function handleRevoke(id) {
-  await inviteStore.revokeInvite(id)
+  try {
+    await inviteStore.revokeInvite(id)
+    showSuccess('Invite revoked')
+  } catch (err) {
+    showError(err.response?.data?.message || err.message || 'Failed to revoke invite')
+  }
 }
 
 onMounted(() => {

@@ -97,11 +97,12 @@
 </template>
 
 <script setup>
-import { ref, computed, inject, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useSnackbar } from '@/composables/useSnackbar'
 import httpClient from '@/services/http-client'
 
-const showSnackbar = inject('showSnackbar')
+const { showError } = useSnackbar()
 
 const route = useRoute()
 
@@ -140,7 +141,7 @@ async function checkout(planId) {
   } catch (e) {
     const msg = e.response?.data?.message || e.message || 'Checkout failed'
     console.error('Checkout failed:', msg)
-    showSnackbar(msg, 'error')
+    showError(msg)
   } finally {
     checkoutLoading.value = null
   }

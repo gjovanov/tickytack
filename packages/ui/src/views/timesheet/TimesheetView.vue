@@ -69,8 +69,9 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useTimesheetStore } from '@/store/timesheet'
+import { useSnackbar } from '@/composables/useSnackbar'
 import CalendarToolbar from '@/components/timesheet/CalendarToolbar.vue'
 import DailyCalendar from '@/components/timesheet/DailyCalendar.vue'
 import WeeklyCalendar from '@/components/timesheet/WeeklyCalendar.vue'
@@ -80,7 +81,7 @@ import RecentTickets from '@/components/timesheet/RecentTickets.vue'
 import TimeEntryDialog from '@/components/timesheet/TimeEntryDialog.vue'
 
 const timesheetStore = useTimesheetStore()
-const showSnackbar = inject('showSnackbar')
+const { showError } = useSnackbar()
 
 const dialogOpen = ref(false)
 const selectedEntry = ref(null)
@@ -145,7 +146,7 @@ async function handleResize({ entry, endTime }) {
     })
   } catch (err) {
     const msg = err.response?.data?.message || err.message || 'Update failed'
-    showSnackbar(msg, 'error')
+    showError(msg)
   }
 }
 
@@ -154,7 +155,7 @@ async function handleDrop({ entryId, date, startTime, endTime }) {
     await timesheetStore.updateEntry(entryId, { date, startTime, endTime })
   } catch (err) {
     const msg = err.response?.data?.message || err.message || 'Update failed'
-    showSnackbar(msg, 'error')
+    showError(msg)
   }
 }
 
@@ -168,7 +169,7 @@ async function handleSave(data) {
     dialogOpen.value = false
   } catch (err) {
     const msg = err.response?.data?.message || err.message || 'Operation failed'
-    showSnackbar(msg, 'error')
+    showError(msg)
   }
 }
 
@@ -178,7 +179,7 @@ async function handleDelete(id) {
     dialogOpen.value = false
   } catch (err) {
     const msg = err.response?.data?.message || err.message || 'Delete failed'
-    showSnackbar(msg, 'error')
+    showError(msg)
   }
 }
 </script>

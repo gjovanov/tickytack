@@ -59,6 +59,7 @@
                   v-model.number="form.settings.workingHoursPerDay"
                   :label="$t('admin.org.workingHours')"
                   type="number"
+                  :rules="[rules.range(1, 24)]"
                   variant="outlined"
                   density="compact"
                 />
@@ -77,12 +78,15 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useSnackbar } from '@/composables/useSnackbar'
+import { useValidation } from '@/composables/useValidation'
 import httpClient from '@/services/http-client'
 
 const { t } = useI18n()
-const showSnackbar = inject('showSnackbar')
+const { showError, showSuccess } = useSnackbar()
+const { rules } = useValidation()
 
 const orgs = ref([])
 const loading = ref(false)
@@ -146,9 +150,9 @@ async function handleSave() {
     }
     dialog.value = false
     fetchOrgs()
+    showSuccess(editItem.value ? 'Organization updated' : 'Organization created')
   } catch (err) {
-    const msg = err.response?.data?.message || err.message || 'Operation failed'
-    showSnackbar(msg, 'error')
+    showError(err.response?.data?.message || err.message || 'Operation failed')
   }
 }
 
@@ -157,9 +161,9 @@ async function confirmDelete(item) {
   try {
     await httpClient.delete(`/org/${item._id}`)
     fetchOrgs()
+    showSuccess('Organization deleted')
   } catch (err) {
-    const msg = err.response?.data?.message || err.message || 'Delete failed'
-    showSnackbar(msg, 'error')
+    showError(err.response?.data?.message || err.message || 'Delete failed')
   }
 }
 

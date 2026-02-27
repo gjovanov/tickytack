@@ -61,7 +61,7 @@
               v-model="form.email"
               :label="$t('admin.user.email')"
               type="email"
-              :rules="[v => !!v || $t('validation.required', { field: $t('admin.user.email') })]"
+              :rules="[rules.required, rules.email]"
               variant="outlined"
               density="compact"
               class="mb-2"
@@ -112,14 +112,17 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/store/app'
+import { useSnackbar } from '@/composables/useSnackbar'
+import { useValidation } from '@/composables/useValidation'
 import httpClient from '@/services/http-client'
 
 const { t } = useI18n()
 const appStore = useAppStore()
-const showSnackbar = inject('showSnackbar')
+const { showError, showSuccess } = useSnackbar()
+const { rules } = useValidation()
 
 const users = ref([])
 const loading = ref(false)
@@ -192,9 +195,9 @@ async function handleSave() {
     }
     dialog.value = false
     fetchUsers()
+    showSuccess(editItem.value ? 'User updated' : 'User created')
   } catch (err) {
-    const msg = err.response?.data?.message || err.message || 'Operation failed'
-    showSnackbar(msg, 'error')
+    showError(err.response?.data?.message || err.message || 'Operation failed')
   }
 }
 
@@ -203,9 +206,9 @@ async function confirmDelete(item) {
   try {
     await httpClient.delete(`/org/${appStore.currentOrg.id}/user/${item._id}`)
     fetchUsers()
+    showSuccess('User deleted')
   } catch (err) {
-    const msg = err.response?.data?.message || err.message || 'Delete failed'
-    showSnackbar(msg, 'error')
+    showError(err.response?.data?.message || err.message || 'Delete failed')
   }
 }
 

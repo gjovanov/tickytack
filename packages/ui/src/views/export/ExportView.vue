@@ -100,10 +100,12 @@
 import { ref, watch, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/store/app'
+import { useSnackbar } from '@/composables/useSnackbar'
 import httpClient from '@/services/http-client'
 
 const { t, locale } = useI18n()
 const appStore = useAppStore()
+const { showSuccess, showError } = useSnackbar()
 
 const formRef = ref(null)
 const loading = ref(false)
@@ -155,7 +157,7 @@ watch(
       )
       previewEntries.value = response.data
     } catch (err) {
-      console.error('Failed to load preview:', err)
+      showError('Failed to load preview')
       previewEntries.value = []
     } finally {
       previewLoading.value = false
@@ -190,8 +192,9 @@ async function handleExport() {
     link.click()
     link.remove()
     window.URL.revokeObjectURL(url)
+    showSuccess('Export downloaded')
   } catch (err) {
-    console.error('Export failed:', err)
+    showError(err.response?.data?.message || err.message || 'Export failed')
   } finally {
     loading.value = false
   }

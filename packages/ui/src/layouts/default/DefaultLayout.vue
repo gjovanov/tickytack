@@ -114,31 +114,28 @@
       <router-view />
     </v-main>
 
-    <v-snackbar v-model="snackbar" :timeout="3000" :color="snackbarColor">
-      {{ snackbarText }}
+    <v-snackbar
+      v-model="snackbar.state.show"
+      :color="snackbar.state.color"
+      :timeout="snackbar.state.timeout"
+      location="bottom right"
+    >
+      {{ snackbar.state.text }}
+      <template #actions>
+        <v-btn variant="text" @click="snackbar.hideSnackbar()">Close</v-btn>
+      </template>
     </v-snackbar>
   </v-app>
 </template>
 
 <script setup>
-import { ref, provide } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/store/app'
+import { useSnackbar } from '@/composables/useSnackbar'
 
 const appStore = useAppStore()
 const router = useRouter()
-
-const snackbar = ref(false)
-const snackbarText = ref('')
-const snackbarColor = ref('success')
-
-function showSnackbar(text, color = 'success') {
-  snackbarText.value = text
-  snackbarColor.value = color
-  snackbar.value = true
-}
-
-provide('showSnackbar', showSnackbar)
+const snackbar = useSnackbar()
 
 function handleLogout() {
   appStore.logout()

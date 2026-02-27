@@ -84,13 +84,14 @@
 </template>
 
 <script setup>
-import { ref, inject, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useProjectsStore } from '@/store/projects'
+import { useSnackbar } from '@/composables/useSnackbar'
 
 const { t } = useI18n()
 const projectsStore = useProjectsStore()
-const showSnackbar = inject('showSnackbar')
+const { showError, showSuccess } = useSnackbar()
 
 const dialog = ref(false)
 const editItem = ref(null)
@@ -134,9 +135,9 @@ async function handleSave() {
       await projectsStore.createProject(form.value)
     }
     dialog.value = false
+    showSuccess(editItem.value ? 'Project updated' : 'Project created')
   } catch (err) {
-    const msg = err.response?.data?.message || err.message || 'Operation failed'
-    showSnackbar(msg, 'error')
+    showError(err.response?.data?.message || err.message || 'Operation failed')
   }
 }
 
@@ -144,9 +145,9 @@ async function confirmDelete(item) {
   if (!confirm(t('messages.confirm.delete', { item: item.name }))) return
   try {
     await projectsStore.deleteProject(item._id)
+    showSuccess('Project deleted')
   } catch (err) {
-    const msg = err.response?.data?.message || err.message || 'Delete failed'
-    showSnackbar(msg, 'error')
+    showError(err.response?.data?.message || err.message || 'Delete failed')
   }
 }
 
