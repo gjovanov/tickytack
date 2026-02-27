@@ -6,6 +6,18 @@ export const routes = [
     meta: { public: true, guest: true },
   },
   {
+    path: '/privacy',
+    name: 'privacy',
+    component: () => import('@/views/legal/PrivacyPolicyView.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/terms',
+    name: 'terms',
+    component: () => import('@/views/legal/TermsView.vue'),
+    meta: { public: true },
+  },
+  {
     path: '/',
     component: () => import('@/layouts/default/DefaultLayout.vue'),
     children: [
