@@ -41,6 +41,12 @@ export const config = {
       business: process.env.STRIPE_PRICE_BUSINESS || '',
     },
   },
+  email: {
+    sendgridApiKey: process.env.SENDGRID_API_KEY || '',
+    fromEmail: process.env.FROM_EMAIL || 'noreply@tickytack.app',
+    appUrl: process.env.APP_URL || 'http://localhost:3000',
+    activationTokenTtlMinutes: Number(process.env.ACTIVATION_TOKEN_TTL_MINUTES) || 5,
+  },
   oauth: {
     baseUrl: process.env.OAUTH_BASE_URL || 'http://localhost:3001',
     frontendUrl: process.env.OAUTH_FRONTEND_URL || 'http://localhost:3000',

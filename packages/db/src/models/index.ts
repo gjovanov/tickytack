@@ -10,3 +10,5 @@ export {
   type TicketPriority,
 } from './ticket.model'
 export { TimeEntry, type ITimeEntry } from './time-entry.model'
+export { Code, type ICode, type CodeType } from './code.model'
+export { EmailLog, type IEmailLog } from './email-log.model'

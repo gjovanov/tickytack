@@ -1,6 +1,8 @@
 import { Elysia } from 'elysia'
-import { orgDao, userDao, inviteDao } from 'services/src/dao'
-import { authRegister, authLogin, authMe, authLogout } from './auth.route'
+import { orgDao, userDao, inviteDao, codeDao } from 'services/src/dao'
+import { sendEmail } from 'services/src/biz/email.service'
+import { config } from 'config/src'
+import { authRegister, authLogin, authMe, authLogout, authActivate } from './auth.route'
 import type { UserTokenized } from '../../types'
 
 const tokenizeUser = (user: {
@@ -74,7 +76,7 @@ export const authController = new Elysia({ prefix: '/auth' })
         lastName,
         role,
         orgId: org._id,
-        isActive: true,
+        isActive: false,
       })
 
       if (!inviteCode) {
@@ -82,18 +84,28 @@ export const authController = new Elysia({ prefix: '/auth' })
         await orgDao.update(org._id, { ownerId: user._id })
       }
 
-      const userTokenized = tokenizeUser(user)
-      const accessToken: string = await jwt.sign(userTokenized)
-      auth.set({
-        value: accessToken,
-        httpOnly: true,
-        maxAge: 24 * 86400,
-        path: '/',
-      })
+      // Generate activation code and send email
+      const { token: activationToken } = await codeDao.createActivationCode(String(user._id), config.email.activationTokenTtlMinutes)
+
+      const activationUrl = `${config.email.appUrl}/auth/activate?userId=${user._id}&token=${activationToken}`
+      await sendEmail({
+        to: email,
+        subject: 'Activate your TickyTack account',
+        html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+<h2>Welcome to TickyTack, ${firstName}!</h2>
+<p>Please activate your account by clicking the button below. This link expires in ${config.email.activationTokenTtlMinutes} minutes.</p>
+<p style="margin: 32px 0;">
+  <a href="${activationUrl}" style="background:#4f46e5;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:bold;">
+    Activate Account
+  </a>
+</p>
+<p>Or copy this link: <a href="${activationUrl}">${activationUrl}</a></p>
+<p style="color:#999;font-size:12px;">If you did not create an account, you can safely ignore this email.</p>
+</div>`,
+      }).catch(err => console.warn('Failed to send activation email:', err))
 
       return {
-        user: { ...userTokenized },
-        token: accessToken,
+        message: 'Registration successful. Please check your email to activate your account.',
         org: { id: String(org._id), name: org.name, slug: org.slug },
       }
     },
@@ -130,6 +142,34 @@ export const authController = new Elysia({ prefix: '/auth' })
       }
     },
     authLogin.schema,
+  )
+  .post(
+    authActivate.path,
+    async ({ body: { userId, token } }) => {
+      const code = await codeDao.findActivationCode(userId, token)
+      if (!code) throw new Error('Invalid or expired activation token')
+
+      const user = await userDao.findById(userId)
+      if (!user) throw new Error('User not found')
+
+      user.isActive = true
+      await user.save()
+
+      await codeDao.deleteForUser(userId)
+
+      // Send success email (non-fatal)
+      await sendEmail({
+        to: user.email,
+        subject: 'Your TickyTack account is active',
+        html: `<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+<h2>Your account is active, ${user.firstName}!</h2>
+<p>Welcome to TickyTack. You can now <a href="${config.email.appUrl}/auth/login">sign in</a>.</p>
+</div>`,
+      }).catch(err => console.warn('Failed to send activation success email:', err))
+
+      return { message: 'Account activated successfully. You can now sign in.' }
+    },
+    authActivate.schema,
   )
   .get(authMe.path, async ({ user }) => {
     if (!user) throw new Error('Unauthorized')

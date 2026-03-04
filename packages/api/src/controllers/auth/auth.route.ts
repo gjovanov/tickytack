@@ -36,3 +36,13 @@ export const authLogout = {
   path: '/logout',
   schema: {},
 }
+
+export const authActivate = {
+  path: '/activate',
+  schema: {
+    body: t.Object({
+      userId: t.String(),
+      token: t.String({ minLength: 7, maxLength: 7 }),
+    }),
+  },
+}
