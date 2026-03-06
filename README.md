@@ -2,6 +2,12 @@
 
 Full-stack time tracking and project management application with weekly calendar view, multi-tenant organization support, and Excel/PDF export with formula-based calculations.
 
+<a href="tickytack-intro.mp4">
+  <img src="https://img.shields.io/badge/%E2%96%B6%20Watch-Intro%20Video%20(~2%3A30)-F57C00?style=for-the-badge" alt="Watch Intro Video" />
+</a>
+
+> **Intro Video**: See the full product walkthrough in [`tickytack-intro.mp4`](tickytack-intro.mp4) — registration, time tracking, project management, export, import, JIRA integration, and more in under 3 minutes.
+
 ## Features
 
 | Category | Feature | Status |
@@ -15,6 +21,11 @@ Full-stack time tracking and project management application with weekly calendar
 | **Export** | Excel with formulas (`=SUM()`, `=(End-Start)*24`) | :white_check_mark: |
 | | PDF via markdown rendering | :white_check_mark: |
 | | Preview table with editable descriptions | :white_check_mark: |
+| **Import** | Excel round-trip (import exported timesheets) | :white_check_mark: |
+| | Replace or append existing time entries | :white_check_mark: |
+| **JIRA Integration** | Import projects and tickets via REST API | :white_check_mark: |
+| | Encrypted API token storage per user | :white_check_mark: |
+| | Attachment download support | :white_check_mark: |
 | **Auth** | JWT httpOnly cookies | :white_check_mark: |
 | | OAuth (Google, Facebook, GitHub, LinkedIn, Microsoft) | :white_check_mark: |
 | | Invite system (shareable links, email invites) | :white_check_mark: |

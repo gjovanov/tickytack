@@ -1,0 +1,87 @@
+[
+  {
+    "scene": 1,
+    "text": "Welcome to TickyTack \u2014 where every minute counts. Literally.",
+    "duration": 4000
+  },
+  {
+    "scene": 2,
+    "text": "Signing up takes 30 seconds. We timed it. Obviously.",
+    "duration": 5000
+  },
+  {
+    "scene": 3,
+    "text": "Show me the money! Well, the hours. Same thing when you bill.",
+    "duration": 5000
+  },
+  {
+    "scene": 4,
+    "text": "Drag, drop, done. Your billable hours just entered themselves.",
+    "duration": 5000
+  },
+  {
+    "scene": 5,
+    "text": "Daily? Weekly? Monthly? We don't judge your time perspective.",
+    "duration": 4000
+  },
+  {
+    "scene": 6,
+    "text": "Projects, color-coded. Because spreadsheets are so 2005.",
+    "duration": 4000
+  },
+  {
+    "scene": 7,
+    "text": "New project, new key, new money. Three clicks.",
+    "duration": 4000
+  },
+  {
+    "scene": 8,
+    "text": "Tickets: where tasks go to get tracked, not forgotten.",
+    "duration": 5000
+  },
+  {
+    "scene": 9,
+    "text": "Your team. All accounted for. No one's hiding.",
+    "duration": 4000
+  },
+  {
+    "scene": 10,
+    "text": "Invite your teammates. Misery loves company. So does billing.",
+    "duration": 4000
+  },
+  {
+    "scene": 11,
+    "text": "Export to Excel with real formulas. Your accountant will weep with joy.",
+    "duration": 5000
+  },
+  {
+    "scene": 12,
+    "text": "Import it back! Round-trip Excel. What goes out, comes back in.",
+    "duration": 5000
+  },
+  {
+    "scene": 13,
+    "text": "JIRA who? Connect your instance, import projects and tickets. Easy peasy.",
+    "duration": 5000
+  },
+  {
+    "scene": 14,
+    "text": "Free to start, Pro when you're serious. Your wallet decides.",
+    "duration": 4000
+  },
+  {
+    "scene": 15,
+    "text": "Sprechen Sie TickyTack? Jawohl.",
+    "duration": 4000
+  },
+  {
+    "scene": 16,
+    "text": "Dark mode. Because developers track time too.",
+    "duration": 4000
+  },
+  {
+    "scene": 17,
+    "text": "TickyTack. Track time. Ship projects. Get paid.",
+    "duration": 5000
+  }
+]
