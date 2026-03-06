@@ -47,6 +47,12 @@ export const config = {
     appUrl: process.env.APP_URL || 'http://localhost:3000',
     activationTokenTtlMinutes: Number(process.env.ACTIVATION_TOKEN_TTL_MINUTES) || 5,
   },
+  jira: {
+    tokenEncryptionKey: process.env.JIRA_TOKEN_ENCRYPTION_KEY || 'default_jira_key_change_me_32ch!',
+  },
+  storage: {
+    attachmentsDir: process.env.ATTACHMENTS_DIR || './data/attachments',
+  },
   oauth: {
     baseUrl: process.env.OAUTH_BASE_URL || 'http://localhost:3001',
     frontendUrl: process.env.OAUTH_FRONTEND_URL || 'http://localhost:3000',

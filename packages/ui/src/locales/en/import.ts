@@ -1,0 +1,16 @@
+export default {
+  title: 'Import Timesheet',
+  selectFile: 'Select Excel File (.xlsx)',
+  preview: 'Preview',
+  noFile: 'Please select a file',
+  periodDetected: 'Period detected',
+  existingEntries: '{count} existing entries in this period',
+  replaceExisting: 'Replace existing time entries',
+  replaceExistingHint: 'If checked, all existing entries for this period will be deleted before importing',
+  importBtn: 'Import',
+  imported: '{count} entries imported',
+  replaced: '{count} entries replaced',
+  hasErrors: 'Import completed with errors',
+  noEntries: 'No entries found in the file.',
+  rowError: 'Row {row}',
+}

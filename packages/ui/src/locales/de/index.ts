@@ -8,6 +8,7 @@ import validation from './validation'
 import messages from './messages'
 import errors from './errors'
 import exportLocale from './export'
+import importLocale from './import'
 
 export default {
   $vuetify: vuetifyDe,
@@ -17,6 +18,7 @@ export default {
   admin,
   auth,
   export: exportLocale,
+  import: importLocale,
   validation,
   messages,
   errors,

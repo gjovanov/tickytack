@@ -3,6 +3,17 @@ import { Schema, model, type Document, type Types } from 'mongoose'
 export type TicketStatus = 'open' | 'in_progress' | 'done' | 'closed'
 export type TicketPriority = 'lowest' | 'low' | 'medium' | 'high' | 'highest'
 
+export type TicketSource = 'jira' | null
+
+export interface ITicketAttachment {
+  filename: string
+  mimeType: string
+  size: number
+  storagePath: string
+  sourceUrl?: string
+  createdAt: Date
+}
+
 export interface ITicket extends Document {
   key: string
   summary: string
@@ -15,6 +26,9 @@ export interface ITicket extends Document {
   priority: TicketPriority
   estimatedHours?: number
   sequenceNumber: number
+  source: TicketSource
+  sourceId?: string
+  attachments: ITicketAttachment[]
   createdAt: Date
   updatedAt: Date
 }
@@ -44,6 +58,18 @@ const ticketSchema = new Schema<ITicket>(
     },
     estimatedHours: { type: Number, default: null },
     sequenceNumber: { type: Number, required: true },
+    source: { type: String, enum: ['jira', null], default: null },
+    sourceId: { type: String, default: null },
+    attachments: [
+      {
+        filename: { type: String, required: true },
+        mimeType: { type: String, required: true },
+        size: { type: Number, required: true },
+        storagePath: { type: String, required: true },
+        sourceUrl: { type: String },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true },
 )

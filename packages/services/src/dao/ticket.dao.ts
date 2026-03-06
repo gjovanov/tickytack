@@ -26,6 +26,29 @@ class TicketDao extends BaseDao<ITicket> {
     return lastTicket ? lastTicket.sequenceNumber + 1 : 100
   }
 
+  async findByKeyAndOrg(key: string, orgId: string): Promise<ITicket | null> {
+    return this.model.findOne({ key, orgId }).exec()
+  }
+
+  async bulkUpsertByKey(
+    orgId: string,
+    tickets: Array<Partial<ITicket> & { key: string }>,
+  ): Promise<{ upsertedCount: number; modifiedCount: number }> {
+    if (!tickets.length) return { upsertedCount: 0, modifiedCount: 0 }
+    const ops = tickets.map((t) => ({
+      updateOne: {
+        filter: { key: t.key, orgId },
+        update: { $set: { ...t, orgId } },
+        upsert: true,
+      },
+    }))
+    const result = await this.model.bulkWrite(ops)
+    return {
+      upsertedCount: result.upsertedCount,
+      modifiedCount: result.modifiedCount,
+    }
+  }
+
   async searchByKey(orgId: string, query: string): Promise<ITicket[]> {
     return this.model
       .find({

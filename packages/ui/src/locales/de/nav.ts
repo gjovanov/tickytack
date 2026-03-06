@@ -6,6 +6,8 @@ export default {
   tickets: 'Tickets',
   users: 'Benutzer',
   export: 'Exportieren',
+  import: 'Importieren',
+  jira: 'JIRA',
   profile: 'Profil',
   settings: 'Einstellungen',
 }

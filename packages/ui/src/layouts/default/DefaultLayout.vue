@@ -38,11 +38,21 @@
           prepend-icon="mdi-credit-card-outline"
           :to="{ name: 'admin.billing' }"
         />
+        <v-list-item
+          :title="$t('nav.jira')"
+          prepend-icon="mdi-cloud-sync-outline"
+          :to="{ name: 'admin.jira' }"
+        />
         <v-divider class="my-2" />
         <v-list-item
           :title="$t('nav.export')"
           prepend-icon="mdi-download-outline"
           :to="{ name: 'export' }"
+        />
+        <v-list-item
+          :title="$t('nav.import')"
+          prepend-icon="mdi-upload-outline"
+          :to="{ name: 'import' }"
         />
       </v-list>
     </v-navigation-drawer>

@@ -1,0 +1,16 @@
+export default {
+  title: 'Zeiterfassung importieren',
+  selectFile: 'Excel-Datei auswählen (.xlsx)',
+  preview: 'Vorschau',
+  noFile: 'Bitte wählen Sie eine Datei aus',
+  periodDetected: 'Erkannter Zeitraum',
+  existingEntries: '{count} bestehende Einträge in diesem Zeitraum',
+  replaceExisting: 'Bestehende Zeiteinträge ersetzen',
+  replaceExistingHint: 'Wenn aktiviert, werden alle bestehenden Einträge für diesen Zeitraum vor dem Import gelöscht',
+  importBtn: 'Importieren',
+  imported: '{count} Einträge importiert',
+  replaced: '{count} Einträge ersetzt',
+  hasErrors: 'Import mit Fehlern abgeschlossen',
+  noEntries: 'Keine Einträge in der Datei gefunden.',
+  rowError: 'Zeile {row}',
+}

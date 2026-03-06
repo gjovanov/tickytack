@@ -9,6 +9,12 @@ export interface IOAuthProvider {
   refreshToken?: string
 }
 
+export interface IJiraSettings {
+  jiraBaseUrl: string
+  jiraEmail: string
+  jiraApiToken: string
+}
+
 export interface IUser extends Document {
   email: string
   username: string
@@ -19,6 +25,7 @@ export interface IUser extends Document {
   orgId: Types.ObjectId
   isActive: boolean
   oauthProviders: IOAuthProvider[]
+  jiraSettings?: IJiraSettings
   createdAt: Date
   updatedAt: Date
 }
@@ -45,6 +52,14 @@ const userSchema = new Schema<IUser>(
         refreshToken: String,
       },
     ],
+    jiraSettings: {
+      type: {
+        jiraBaseUrl: { type: String, required: true },
+        jiraEmail: { type: String, required: true },
+        jiraApiToken: { type: String, required: true },
+      },
+      default: null,
+    },
   },
   { timestamps: true },
 )

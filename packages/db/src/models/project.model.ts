@@ -1,5 +1,7 @@
 import { Schema, model, type Document, type Types } from 'mongoose'
 
+export type ProjectSource = 'jira' | null
+
 export interface IProject extends Document {
   name: string
   key: string
@@ -8,6 +10,8 @@ export interface IProject extends Document {
   leadId?: Types.ObjectId
   color: string
   isActive: boolean
+  source: ProjectSource
+  sourceId?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -21,6 +25,8 @@ const projectSchema = new Schema<IProject>(
     leadId: { type: Schema.Types.ObjectId, ref: 'User', default: null },
     color: { type: String, default: '#1976D2' },
     isActive: { type: Boolean, default: true },
+    source: { type: String, enum: ['jira', null], default: null },
+    sourceId: { type: String, default: null },
   },
   { timestamps: true },
 )

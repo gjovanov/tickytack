@@ -50,6 +50,38 @@ class TimeEntryDao extends BaseDao<ITimeEntry> {
       .exec()
   }
 
+  async deleteByUserAndDateRange(
+    orgId: string,
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<number> {
+    const result = await this.model.deleteMany({
+      orgId,
+      userId,
+      date: { $gte: startDate, $lte: endDate },
+    })
+    return result.deletedCount
+  }
+
+  async bulkCreate(entries: Partial<ITimeEntry>[]): Promise<ITimeEntry[]> {
+    if (!entries.length) return []
+    return this.model.insertMany(entries) as Promise<ITimeEntry[]>
+  }
+
+  async countByUserAndDateRange(
+    orgId: string,
+    userId: string,
+    startDate: Date,
+    endDate: Date,
+  ): Promise<number> {
+    return this.model.countDocuments({
+      orgId,
+      userId,
+      date: { $gte: startDate, $lte: endDate },
+    })
+  }
+
   async getSummaryByDateRange(
     orgId: string,
     startDate: Date,

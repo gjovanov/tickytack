@@ -24,6 +24,8 @@ import { timeentryController } from './controllers/timeentry/timeentry.controlle
 import { exportController } from './controllers/export/export.controller'
 import { inviteController } from './controllers/invite/invite.controller'
 import { stripeController } from './controllers/stripe/stripe.controller'
+import { importController } from './controllers/import/import.controller'
+import { jiraController } from './controllers/jira/jira.controller'
 
 import type { UserTokenized } from './types'
 
@@ -47,6 +49,8 @@ const spaPaths = [
   '/admin/invites',
   '/admin/billing',
   '/export',
+  '/import',
+  '/admin/jira',
   '/privacy',
   '/terms',
 ]
@@ -159,7 +163,9 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
       .use(timeentryController)
       .use(exportController)
       .use(inviteController)
-      .use(stripeController),
+      .use(stripeController)
+      .use(importController)
+      .use(jiraController),
   )
   .use(
     staticPlugin({

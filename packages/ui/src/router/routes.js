@@ -100,12 +100,22 @@ export const routes = [
             name: 'admin.billing',
             component: () => import('@/views/admin/BillingView.vue'),
           },
+          {
+            path: 'jira',
+            name: 'admin.jira',
+            component: () => import('@/views/admin/JiraSettingsView.vue'),
+          },
         ],
       },
       {
         path: 'export',
         name: 'export',
         component: () => import('@/views/export/ExportView.vue'),
+      },
+      {
+        path: 'import',
+        name: 'import',
+        component: () => import('@/views/import/ImportView.vue'),
       },
     ],
   },
