@@ -13,7 +13,7 @@ export default defineConfig({
     baseURL: process.env.BASE_URL || 'http://localhost:3000',
     video: { mode: 'on', size: { width: 1280, height: 720 } },
     viewport: { width: 1280, height: 720 },
-    launchOptions: { slowMo: 80 },
+    launchOptions: { slowMo: 40 },
   },
   projects: [
     {

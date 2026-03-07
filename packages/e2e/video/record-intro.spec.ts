@@ -89,7 +89,7 @@ function delay(page: Page, ms: number) {
 
 test.describe('TickyTack Intro Video', () => {
   test('record full intro walkthrough', async ({ page }) => {
-    test.setTimeout(300_000) // 5 minutes max
+    test.setTimeout(600_000) // 10 minutes max
 
     // Unique suffix to avoid conflicts with previous runs
     const suffix = Date.now().toString().slice(-6)
@@ -169,8 +169,8 @@ test.describe('TickyTack Intro Video', () => {
     await delay(page, 500)
 
     // Login as seeded admin user
-    await page.getByLabel('Organization').fill('oebb')
-    await page.getByLabel('Username').fill('gjovanov')
+    await page.getByLabel('Organization').fill('acme-labs')
+    await page.getByLabel('Username').fill('sarahc')
     await page.locator('input[type="password"]').fill('admin123')
     await page.getByRole('button', { name: 'Sign In' }).click()
     await page.waitForURL('**/timesheet', { timeout: 15_000 })
@@ -275,14 +275,14 @@ test.describe('TickyTack Intro Video', () => {
     await caption(page, 6)
 
     // Hover seeded projects
-    const pclassCell = page.getByRole('cell', { name: 'PCLASS', exact: true })
-    if (await pclassCell.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await pclassCell.hover()
+    const webCell = page.getByRole('cell', { name: 'WEB', exact: true })
+    if (await webCell.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await webCell.hover()
       await delay(page, 500)
     }
-    const pplusCell = page.getByRole('cell', { name: 'PPLUS', exact: true })
-    if (await pplusCell.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await pplusCell.hover()
+    const mobCell = page.getByRole('cell', { name: 'MOB', exact: true })
+    if (await mobCell.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await mobCell.hover()
       await delay(page, 500)
     }
 
@@ -321,7 +321,7 @@ test.describe('TickyTack Intro Video', () => {
 
     // Select a project to see tickets
     await page.getByRole('combobox', { name: 'Project' }).click({ force: true })
-    await page.getByRole('option', { name: /PCLASS/ }).click()
+    await page.getByRole('option', { name: /WEB/ }).click()
     await page.keyboard.press('Escape')
     await page.waitForLoadState('networkidle')
     await delay(page, 800)
@@ -360,14 +360,14 @@ test.describe('TickyTack Intro Video', () => {
     await caption(page, 9)
 
     // Hover over user rows
-    const gjovanovCell = page.getByRole('cell', { name: 'gjovanov', exact: true })
-    if (await gjovanovCell.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await gjovanovCell.hover()
+    const sarahCell = page.getByRole('cell', { name: 'sarahc', exact: true })
+    if (await sarahCell.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await sarahCell.hover()
       await delay(page, 500)
     }
-    const cburkerCell = page.getByRole('cell', { name: 'cburker', exact: true })
-    if (await cburkerCell.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await cburkerCell.hover()
+    const mikeCell = page.getByRole('cell', { name: 'mikeb', exact: true })
+    if (await mikeCell.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await mikeCell.hover()
       await delay(page, 500)
     }
 
