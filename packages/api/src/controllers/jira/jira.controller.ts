@@ -5,7 +5,7 @@ import NotFoundError from '../../errors/NotFoundError'
 import { userDao } from 'services/src/dao'
 import { encrypt, decrypt } from 'services/src/biz/crypto.service'
 import { JiraService } from 'services/src/biz/jira.service'
-import { importJiraProjects, importJiraIssues } from 'services/src/biz/jira-import.service'
+import { importJiraProjects, importJiraIssues, importJiraProjectsFromData, importJiraIssuesFromData } from 'services/src/biz/jira-import.service'
 import { config } from 'config/src'
 
 async function getUserJiraSettings(userId: string) {
@@ -111,6 +111,63 @@ export const jiraController = new Elysia({ prefix: '/org/:orgId/jira' })
       body: t.Object({
         projectKey: t.String(),
         includeAttachments: t.Optional(t.Boolean()),
+      }),
+    },
+  )
+  // Client-side import: accept pre-fetched JIRA project data
+  .post(
+    '/import/projects-data',
+    async ({ params: { orgId }, body, user }) => {
+      if (!user) throw new UnauthorizedError()
+      return importJiraProjectsFromData(orgId, user.id, body.projects)
+    },
+    {
+      body: t.Object({
+        projects: t.Array(
+          t.Object({
+            id: t.String(),
+            key: t.String(),
+            name: t.String(),
+            description: t.Optional(t.String()),
+          }),
+        ),
+      }),
+    },
+  )
+  // Client-side import: accept pre-fetched JIRA issue data
+  .post(
+    '/import/issues-data',
+    async ({ params: { orgId }, body, user }) => {
+      if (!user) throw new UnauthorizedError()
+      return importJiraIssuesFromData(orgId, user.id, body.projectKey, body.issues)
+    },
+    {
+      body: t.Object({
+        projectKey: t.String(),
+        issues: t.Array(
+          t.Object({
+            id: t.String(),
+            key: t.String(),
+            fields: t.Object({
+              summary: t.String(),
+              description: t.Optional(t.String()),
+              status: t.Object({ name: t.String() }),
+              priority: t.Optional(t.Object({ name: t.String() })),
+              assignee: t.Optional(
+                t.Object({
+                  emailAddress: t.String(),
+                  displayName: t.String(),
+                }),
+              ),
+              reporter: t.Optional(
+                t.Object({
+                  emailAddress: t.String(),
+                  displayName: t.String(),
+                }),
+              ),
+            }),
+          }),
+        ),
       }),
     },
   )
