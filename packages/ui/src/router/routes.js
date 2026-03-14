@@ -18,6 +18,18 @@ export const routes = [
     meta: { public: true },
   },
   {
+    path: '/data-deletion',
+    name: 'data-deletion',
+    component: () => import('@/views/legal/DataDeletionView.vue'),
+    meta: { public: true },
+  },
+  {
+    path: '/deletion-status',
+    name: 'deletion-status',
+    component: () => import('@/views/legal/DeletionStatusView.vue'),
+    meta: { public: true },
+  },
+  {
     path: '/',
     component: () => import('@/layouts/default/DefaultLayout.vue'),
     children: [

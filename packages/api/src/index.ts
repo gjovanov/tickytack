@@ -26,6 +26,7 @@ import { inviteController } from './controllers/invite/invite.controller'
 import { stripeController } from './controllers/stripe/stripe.controller'
 import { importController } from './controllers/import/import.controller'
 import { jiraController } from './controllers/jira/jira.controller'
+import { facebookController } from './controllers/facebook/facebook.controller'
 
 import type { UserTokenized } from './types'
 
@@ -53,6 +54,8 @@ const spaPaths = [
   '/admin/jira',
   '/privacy',
   '/terms',
+  '/data-deletion',
+  '/deletion-status',
 ]
 
 // Connect to MongoDB
@@ -165,7 +168,8 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
       .use(inviteController)
       .use(stripeController)
       .use(importController)
-      .use(jiraController),
+      .use(jiraController)
+      .use(facebookController),
   )
   .use(
     staticPlugin({

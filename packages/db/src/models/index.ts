@@ -14,3 +14,4 @@ export {
 export { TimeEntry, type ITimeEntry } from './time-entry.model'
 export { Code, type ICode, type CodeType } from './code.model'
 export { EmailLog, type IEmailLog } from './email-log.model'
+export { DataDeletionRequest, type IDataDeletionRequest, type DeletionStatus } from './data-deletion-request.model'

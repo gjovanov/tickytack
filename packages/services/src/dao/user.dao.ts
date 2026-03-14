@@ -30,6 +30,13 @@ class UserDao extends BaseDao<IUser> {
     return this.model.findOne({ username, orgId: org._id }).exec()
   }
 
+  async findByOAuthProviderId(provider: string, providerId: string): Promise<IUser | null> {
+    return this.model.findOne({
+      'oauthProviders.provider': provider,
+      'oauthProviders.providerId': providerId,
+    }).exec()
+  }
+
   async findByOrgId(orgId: string): Promise<IUser[]> {
     return this.model
       .find({ orgId })
