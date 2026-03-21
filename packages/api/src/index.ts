@@ -27,6 +27,7 @@ import { stripeController } from './controllers/stripe/stripe.controller'
 import { importController } from './controllers/import/import.controller'
 import { jiraController } from './controllers/jira/jira.controller'
 import { facebookController } from './controllers/facebook/facebook.controller'
+import { rateLimit } from './rate-limit'
 
 import type { UserTokenized } from './types'
 
@@ -146,6 +147,15 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
       exposeHeaders: ['Content-Disposition'],
     }),
   )
+  .onBeforeHandle(({ set }) => {
+    set.headers['X-Content-Type-Options'] = 'nosniff'
+    set.headers['X-Frame-Options'] = 'DENY'
+    set.headers['X-XSS-Protection'] = '1; mode=block'
+    set.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    if (process.env.NODE_ENV === 'production') {
+      set.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    }
+  })
   .use(
     swagger({
       documentation: {
@@ -160,6 +170,7 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
   .group('/api', (app) =>
     app
       .use(healthController)
+      .use(rateLimit({ name: 'auth', max: 20, windowMs: 60 * 1000 }))
       .use(authController)
       .use(oauthController)
       .use(orgController)
