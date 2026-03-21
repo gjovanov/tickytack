@@ -6,13 +6,16 @@ import UnauthorizedError from '../../errors/UnauthorizedError'
 export const ticketController = new Elysia({
   prefix: '/org/:orgId/project/:projectId/ticket',
 })
-  .get('/', async ({ params: { orgId, projectId } }) => {
+  .get('/', async ({ params: { orgId, projectId }, user }) => {
+    if (!user) throw new UnauthorizedError()
+    if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
     return ticketDao.findByOrgId(orgId, projectId)
   })
   .post(
     '/',
     async ({ params: { orgId, projectId }, body, user }) => {
       if (!user) throw new UnauthorizedError()
+      if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
 
       const project = await projectDao.findById(projectId)
       if (!project) throw new NotFoundError('Project not found')
@@ -55,14 +58,17 @@ export const ticketController = new Elysia({
       }),
     },
   )
-  .get('/:ticketId', async ({ params: { ticketId } }) => {
+  .get('/:ticketId', async ({ params: { ticketId }, user }) => {
+    if (!user) throw new UnauthorizedError()
     const ticket = await ticketDao.findById(ticketId)
     if (!ticket) throw new NotFoundError('Ticket not found')
     return ticket
   })
   .put(
     '/:ticketId',
-    async ({ params: { ticketId }, body }) => {
+    async ({ params: { orgId, ticketId }, body, user }) => {
+      if (!user) throw new UnauthorizedError()
+      if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
       const ticket = await ticketDao.update(ticketId, body)
       if (!ticket) throw new NotFoundError('Ticket not found')
       return ticket

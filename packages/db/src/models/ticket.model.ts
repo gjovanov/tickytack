@@ -76,5 +76,7 @@ const ticketSchema = new Schema<ITicket>(
 
 ticketSchema.index({ key: 1, orgId: 1 }, { unique: true })
 ticketSchema.index({ projectId: 1, orgId: 1 })
+ticketSchema.index({ orgId: 1, status: 1 })
+ticketSchema.index({ orgId: 1, priority: 1 })
 
 export const Ticket = model<ITicket>('Ticket', ticketSchema)

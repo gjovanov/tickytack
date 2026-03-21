@@ -17,10 +17,18 @@ interface AuthUser {
   orgId: string
 }
 
+interface OrgSubscription {
+  plan: string
+  status: string
+  currentPeriodEnd: string | null
+  cancelAtPeriodEnd: boolean
+}
+
 interface OrgInfo {
   id: string
   name: string
   slug: string
+  subscription?: OrgSubscription
 }
 
 interface AppState {

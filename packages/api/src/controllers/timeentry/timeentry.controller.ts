@@ -9,15 +9,20 @@ export const timeentryController = new Elysia({
 })
   .get('/', async ({ params: { orgId }, query, user }) => {
     if (!user) throw new UnauthorizedError()
+    if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
 
     const startDate = new Date(query.startDate)
     const endDate = new Date(query.endDate)
-    const userId = query.userId || user.id
+    // Only admins/managers can view other users' entries
+    const userId = (query.userId && (user.role === 'admin' || user.role === 'manager'))
+      ? query.userId
+      : user.id
 
     return timeEntryDao.findByUserAndDateRange(orgId, userId, startDate, endDate)
   })
   .get('/summary', async ({ params: { orgId }, query, user }) => {
     if (!user) throw new UnauthorizedError()
+    if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
 
     const startDate = new Date(query.startDate)
     const endDate = new Date(query.endDate)
@@ -33,6 +38,7 @@ export const timeentryController = new Elysia({
     '/',
     async ({ params: { orgId }, body, user }) => {
       if (!user) throw new UnauthorizedError()
+      if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
 
       const ticket = await ticketDao.findById(body.ticketId)
       if (!ticket) throw new NotFoundError('Ticket not found')

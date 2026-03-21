@@ -12,6 +12,7 @@ export const importController = new Elysia({
     '/excel/preview',
     async ({ params: { orgId }, body, user }) => {
       if (!user) throw new UnauthorizedError()
+      if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
 
       const file = body.file
       if (!file) throw new BadRequestError('No file provided')
@@ -44,6 +45,7 @@ export const importController = new Elysia({
     '/excel',
     async ({ params: { orgId }, body, user }) => {
       if (!user) throw new UnauthorizedError()
+      if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
 
       const file = body.file
       if (!file) throw new BadRequestError('No file provided')

@@ -3,11 +3,14 @@ import { projectDao } from 'services/src/dao'
 import BadRequestError from '../../errors/BadRequestError'
 import NotFoundError from '../../errors/NotFoundError'
 import UnauthorizedError from '../../errors/UnauthorizedError'
+import { checkProjectLimit } from '../../plan-limits'
 
 export const projectController = new Elysia({
   prefix: '/org/:orgId/project',
 })
-  .get('/', async ({ params: { orgId } }) => {
+  .get('/', async ({ params: { orgId }, user }) => {
+    if (!user) throw new UnauthorizedError()
+    if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
     return projectDao.findByOrgId(orgId)
   })
   .post(
@@ -15,7 +18,9 @@ export const projectController = new Elysia({
     async ({ params: { orgId }, body, user }) => {
       if (!user || (user.role !== 'admin' && user.role !== 'manager'))
         throw new UnauthorizedError('Forbidden')
+      if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
 
+      await checkProjectLimit(orgId)
       try {
         return await projectDao.create({
           ...body,
@@ -38,16 +43,18 @@ export const projectController = new Elysia({
       }),
     },
   )
-  .get('/:projectId', async ({ params: { projectId } }) => {
+  .get('/:projectId', async ({ params: { projectId }, user }) => {
+    if (!user) throw new UnauthorizedError()
     const project = await projectDao.findById(projectId)
     if (!project) throw new NotFoundError('Project not found')
     return project
   })
   .put(
     '/:projectId',
-    async ({ params: { projectId }, body, user }) => {
+    async ({ params: { orgId, projectId }, body, user }) => {
       if (!user || (user.role !== 'admin' && user.role !== 'manager'))
         throw new UnauthorizedError('Forbidden')
+      if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
 
       const project = await projectDao.update(projectId, body)
       if (!project) throw new NotFoundError('Project not found')

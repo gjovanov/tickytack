@@ -139,6 +139,10 @@ const app: Elysia = new Elysia({ serve: { reusePort: true }, aot: true })
   .use(AuthService)
   .use(
     cors({
+      origin: process.env.NODE_ENV === 'production'
+        ? ['https://tickytack.app']
+        : true,
+      credentials: true,
       exposeHeaders: ['Content-Disposition'],
     }),
   )

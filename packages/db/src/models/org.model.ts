@@ -43,4 +43,7 @@ const orgSchema = new Schema<IOrg>(
   { timestamps: true },
 )
 
+orgSchema.index({ ownerId: 1 })
+orgSchema.index({ 'subscription.stripeCustomerId': 1 }, { sparse: true })
+
 export const Org = model<IOrg>('Org', orgSchema)

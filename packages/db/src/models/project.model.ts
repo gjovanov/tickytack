@@ -32,5 +32,6 @@ const projectSchema = new Schema<IProject>(
 )
 
 projectSchema.index({ key: 1, orgId: 1 }, { unique: true })
+projectSchema.index({ orgId: 1 })
 
 export const Project = model<IProject>('Project', projectSchema)

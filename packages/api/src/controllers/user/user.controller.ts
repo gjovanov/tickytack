@@ -3,10 +3,12 @@ import { userDao } from 'services/src/dao'
 import BadRequestError from '../../errors/BadRequestError'
 import NotFoundError from '../../errors/NotFoundError'
 import UnauthorizedError from '../../errors/UnauthorizedError'
+import { checkUserLimit } from '../../plan-limits'
 
 export const userController = new Elysia({ prefix: '/org/:orgId/user' })
   .get('/', async ({ params: { orgId }, user }) => {
     if (!user) throw new UnauthorizedError()
+    if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
     return userDao.findByOrgId(orgId)
   })
   .post(
@@ -14,7 +16,9 @@ export const userController = new Elysia({ prefix: '/org/:orgId/user' })
     async ({ params: { orgId }, body, user }) => {
       if (!user || (user.role !== 'admin' && user.role !== 'manager'))
         throw new UnauthorizedError('Forbidden')
+      if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
 
+      await checkUserLimit(orgId)
       const hashedPassword = await Bun.password.hash(body.password)
       try {
         return await userDao.create({

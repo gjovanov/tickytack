@@ -4,6 +4,7 @@ import BadRequestError from '../../errors/BadRequestError'
 import UnauthorizedError from '../../errors/UnauthorizedError'
 import { generateTimesheetXLSX } from 'reporting/excel/timesheet.excel'
 import { generateTimesheetPDF } from 'reporting/pdf/timesheet.pdf'
+import { checkExportEnabled } from '../../plan-limits'
 
 const exportBody = t.Object({
   startDate: t.String(),
@@ -20,6 +21,8 @@ export const exportController = new Elysia({
     '/excel',
     async ({ params: { orgId }, body, user, set }) => {
       if (!user) throw new UnauthorizedError()
+      if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
+      await checkExportEnabled(orgId)
 
       const startDate = new Date(body.startDate)
       const endDate = new Date(body.endDate)
@@ -56,6 +59,8 @@ export const exportController = new Elysia({
     '/pdf',
     async ({ params: { orgId }, body, user, set }) => {
       if (!user) throw new UnauthorizedError()
+      if (user.orgId !== orgId) throw new UnauthorizedError('Forbidden')
+      await checkExportEnabled(orgId)
 
       const startDate = new Date(body.startDate)
       const endDate = new Date(body.endDate)

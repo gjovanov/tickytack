@@ -131,6 +131,8 @@ export const authController = new Elysia({ prefix: '/auth' })
       auth.set({
         value: accessToken,
         httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
         maxAge: 24 * 86400,
         path: '/',
       })
@@ -182,7 +184,19 @@ export const authController = new Elysia({ prefix: '/auth' })
     return {
       user: tokenizeUser(dbUser),
       org: org
-        ? { id: String(org._id), name: org.name, slug: org.slug }
+        ? {
+            id: String(org._id),
+            name: org.name,
+            slug: org.slug,
+            subscription: org.subscription
+              ? {
+                  plan: org.subscription.plan,
+                  status: org.subscription.status,
+                  currentPeriodEnd: org.subscription.currentPeriodEnd || null,
+                  cancelAtPeriodEnd: org.subscription.cancelAtPeriodEnd || false,
+                }
+              : { plan: 'free', status: 'active', currentPeriodEnd: null, cancelAtPeriodEnd: false },
+          }
         : null,
     }
   })
