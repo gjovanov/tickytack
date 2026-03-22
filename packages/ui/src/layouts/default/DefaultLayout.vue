@@ -57,7 +57,7 @@
       </v-list>
     </v-navigation-drawer>
 
-    <v-app-bar app density="compact" elevation="1">
+    <v-app-bar app density="compact" elevation="0">
       <v-app-bar-nav-icon
         v-if="appStore.isAuth"
         @click="appStore.toggleLeftDrawer()"

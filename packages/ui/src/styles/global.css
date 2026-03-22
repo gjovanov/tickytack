@@ -1,0 +1,127 @@
+/* ─── TickyTack Global Theme Overrides ─── */
+/* Edumin-inspired card/content design with contrast backgrounds */
+
+/* ─── Light Mode ─── */
+.v-theme--light {
+  --ttt-page-bg: #f4f0ed;
+  --ttt-card-bg: #ffffff;
+  --ttt-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+  --ttt-card-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --ttt-card-border: 1px solid rgba(0, 0, 0, 0.06);
+  --ttt-card-radius: 12px;
+  --ttt-sidebar-bg: #ffffff;
+  --ttt-sidebar-border: 1px solid rgba(0, 0, 0, 0.06);
+  --ttt-appbar-bg: #ffffff;
+  --ttt-appbar-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --ttt-divider: rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Dark Mode ─── */
+.v-theme--dark {
+  --ttt-page-bg: #0e0c0b;
+  --ttt-card-bg: #1e1a17;
+  --ttt-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.15);
+  --ttt-card-shadow-hover: 0 2px 8px rgba(0, 0, 0, 0.3), 0 8px 28px rgba(0, 0, 0, 0.2);
+  --ttt-card-border: 1px solid rgba(255, 255, 255, 0.06);
+  --ttt-card-radius: 12px;
+  --ttt-sidebar-bg: #1a1614;
+  --ttt-sidebar-border: 1px solid rgba(255, 255, 255, 0.06);
+  --ttt-appbar-bg: #1a1614;
+  --ttt-appbar-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  --ttt-divider: rgba(255, 255, 255, 0.08);
+}
+
+/* ─── Page Background ─── */
+.v-application .v-main {
+  background: var(--ttt-page-bg) !important;
+}
+
+/* ─── Cards ─── */
+.v-application .v-card {
+  background: var(--ttt-card-bg) !important;
+  border: var(--ttt-card-border) !important;
+  border-radius: var(--ttt-card-radius) !important;
+  box-shadow: var(--ttt-card-shadow) !important;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.v-application .v-card:hover {
+  box-shadow: var(--ttt-card-shadow-hover) !important;
+}
+
+/* Outlined cards get same treatment — override Vuetify's default outlined border */
+.v-application .v-card--variant-outlined {
+  border: var(--ttt-card-border) !important;
+}
+
+/* Cards inside dialogs should not have extra hover effects */
+.v-application .v-dialog .v-card:hover {
+  box-shadow: var(--ttt-card-shadow) !important;
+}
+
+/* ─── Navigation Drawer ─── */
+.v-application .v-navigation-drawer {
+  background: var(--ttt-sidebar-bg) !important;
+  border-right: var(--ttt-sidebar-border) !important;
+  box-shadow: none !important;
+}
+
+/* ─── App Bar ─── */
+.v-application .v-app-bar {
+  background: var(--ttt-appbar-bg) !important;
+  box-shadow: var(--ttt-appbar-shadow) !important;
+  border-bottom: var(--ttt-card-border) !important;
+}
+
+/* ─── Data Tables ─── */
+.v-application .v-data-table {
+  border-radius: var(--ttt-card-radius) !important;
+  overflow: hidden;
+}
+
+/* ─── Expansion Panels ─── */
+.v-application .v-expansion-panels {
+  border-radius: var(--ttt-card-radius) !important;
+}
+
+.v-application .v-expansion-panel {
+  border-radius: var(--ttt-card-radius) !important;
+}
+
+/* ─── Text Fields ─── */
+.v-application .v-text-field .v-field {
+  border-radius: 8px;
+}
+
+/* ─── Buttons ─── */
+.v-application .v-btn {
+  border-radius: 8px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ─── Alerts ─── */
+.v-application .v-alert {
+  border-radius: 10px !important;
+}
+
+/* ─── Dialogs ─── */
+.v-application .v-dialog .v-card {
+  border-radius: 16px !important;
+}
+
+/* ─── Lists in drawer ─── */
+.v-application .v-navigation-drawer .v-list-item {
+  border-radius: 8px;
+  margin: 2px 8px;
+}
+
+/* ─── Snackbar ─── */
+.v-application .v-snackbar__wrapper {
+  border-radius: 10px !important;
+}
+
+/* ─── Chips ─── */
+.v-application .v-chip {
+  border-radius: 8px;
+}

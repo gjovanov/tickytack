@@ -9,10 +9,21 @@ export default createVuetify({
   locale: {
     adapter: createVueI18nAdapter({ i18n, useI18n }),
   },
+  defaults: {
+    VCard: {
+      elevation: 0,
+      variant: 'flat',
+    },
+    VBtn: {
+      elevation: 0,
+    },
+  },
   theme: {
     themes: {
       light: {
         colors: {
+          background: '#f4f0ed',
+          surface: '#ffffff',
           primary: '#F57C00',
           secondary: '#5D4037',
           accent: '#00897B',
@@ -24,11 +35,11 @@ export default createVuetify({
       },
       dark: {
         colors: {
+          background: '#0e0c0b',
+          surface: '#1E1A17',
           primary: '#FFB74D',
           secondary: '#8D6E63',
           accent: '#4DB6AC',
-          surface: '#1E1A17',
-          background: '#121010',
           success: '#66BB6A',
           warning: '#FFA726',
           error: '#EF5350',

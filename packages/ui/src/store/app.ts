@@ -45,7 +45,7 @@ interface AppState {
 
 export const useAppStore = defineStore('app', {
   state: (): AppState => ({
-    theme: 'light',
+    theme: localStorage.getItem('ttt_theme') || 'light',
     locale: getInitialLocale(),
     leftDrawer: true,
     auth: {
@@ -122,6 +122,7 @@ export const useAppStore = defineStore('app', {
     },
     toggleTheme() {
       this.theme = this.theme === 'light' ? 'dark' : 'light'
+      localStorage.setItem('ttt_theme', this.theme)
     },
     setLocale(locale: string) {
       if (SUPPORTED_LOCALES.includes(locale as 'en' | 'de')) {
