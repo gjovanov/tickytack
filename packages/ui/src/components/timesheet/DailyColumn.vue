@@ -41,6 +41,8 @@ const START_HOUR = 6
 const END_HOUR = 22
 const MAX_MINUTES = (END_HOUR - START_HOUR) * 60 // 960
 const DRAG_THRESHOLD = 5 // px
+const PX_PER_MINUTE = 0.5
+const HOUR_HEIGHT = 30 // px per hour slot
 
 const props = defineProps({
   date: { type: String, required: true },
@@ -73,16 +75,15 @@ function minutesToTime(minutes) {
 }
 
 function yToMinutes(y) {
-  // 1px = 1 minute offset from START_HOUR
-  return snapMinutes(Math.floor(y))
+  return snapMinutes(Math.floor(y / PX_PER_MINUTE))
 }
 
 const dragPreviewStyle = computed(() => {
   const minMin = Math.min(dragStartMinutes.value, dragCurrentMinutes.value)
   const maxMin = Math.max(dragStartMinutes.value, dragCurrentMinutes.value)
   return {
-    top: `${minMin}px`,
-    height: `${Math.max(maxMin - minMin, 15)}px`,
+    top: `${minMin * PX_PER_MINUTE}px`,
+    height: `${Math.max((maxMin - minMin) * PX_PER_MINUTE, 8)}px`,
   }
 })
 
@@ -157,7 +158,7 @@ onBeforeUnmount(() => {
 
 function getEntryPosition(entry) {
   const [startH, startM] = entry.startTime.split(':').map(Number)
-  const topOffset = (startH - START_HOUR) * 60 + startM
+  const topOffset = ((startH - START_HOUR) * 60 + startM) * PX_PER_MINUTE
   return {
     top: `${topOffset}px`,
   }
@@ -179,7 +180,7 @@ function handleDrop(e) {
     const rect = e.currentTarget.getBoundingClientRect()
     const grabOffset = data.grabOffsetY || 0
     const y = e.clientY - rect.top - grabOffset
-    const rawMinutes = Math.max(Math.floor(y), 0)
+    const rawMinutes = Math.max(Math.floor(y / PX_PER_MINUTE), 0)
     const snappedMinutes = Math.round(rawMinutes / 15) * 15
     const dropHour = Math.floor(snappedMinutes / 60) + START_HOUR
     const dropMinute = snappedMinutes % 60
@@ -206,7 +207,7 @@ function handleDrop(e) {
 .daily-column {
   position: relative;
   border-left: 1px solid rgba(var(--v-border-color), 0.1);
-  min-height: calc(17 * 60px);
+  min-height: calc(17 * 30px);
   user-select: none;
 }
 
@@ -219,7 +220,7 @@ function handleDrop(e) {
 }
 
 .hour-slot {
-  height: 60px;
+  height: 30px;
   border-top: 1px solid rgba(var(--v-border-color), 0.05);
   cursor: pointer;
 }

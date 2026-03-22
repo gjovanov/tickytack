@@ -39,12 +39,14 @@ const isDragging = ref(false)
 const recentlyResized = ref(false)
 const recentlyDragged = ref(false)
 
+const PX_PER_MINUTE = 0.5
+
 const bgColor = computed(
   () => props.entry.projectId?.color || '#1976D2',
 )
 
 const baseHeight = computed(() =>
-  Math.max(props.entry.durationMinutes, 20),
+  Math.max(props.entry.durationMinutes * PX_PER_MINUTE, 10),
 )
 
 const displayEndTime = computed(() => {
@@ -60,7 +62,7 @@ const displayEndTime = computed(() => {
 const cardStyle = computed(() => ({
   backgroundColor: bgColor.value,
   height: isResizing.value
-    ? `${snapTo15(calcNewDuration())}px`
+    ? `${Math.max(snapTo15(calcNewDuration()) * PX_PER_MINUTE, 10)}px`
     : `${baseHeight.value}px`,
 }))
 
@@ -69,7 +71,7 @@ function snapTo15(minutes) {
 }
 
 function calcNewDuration() {
-  return Math.max(props.entry.durationMinutes + resizeDeltaY.value, 15)
+  return Math.max(props.entry.durationMinutes + resizeDeltaY.value / PX_PER_MINUTE, 15)
 }
 
 function handleClick(e) {
@@ -153,7 +155,7 @@ function startResize(e) {
   overflow: hidden;
   z-index: 1;
   transition: box-shadow 0.15s;
-  min-height: 20px;
+  min-height: 10px;
 }
 
 .time-entry-card:active {

@@ -88,7 +88,7 @@ function formatHour(hour) {
 
 onMounted(() => {
   if (calendarBody.value) {
-    calendarBody.value.scrollTop = 2 * 60
+    calendarBody.value.scrollTop = 2 * 30
   }
 })
 </script>
@@ -130,7 +130,7 @@ onMounted(() => {
 }
 
 .hour-label {
-  height: 60px;
+  height: 30px;
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;

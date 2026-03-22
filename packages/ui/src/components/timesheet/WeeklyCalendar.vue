@@ -95,7 +95,7 @@ function formatHour(hour) {
 onMounted(() => {
   // Scroll to 8am by default
   if (calendarBody.value) {
-    calendarBody.value.scrollTop = 2 * 60 // 2 hours * 60px
+    calendarBody.value.scrollTop = 2 * 30 // 2 hours * 30px
   }
 })
 </script>
@@ -137,7 +137,7 @@ onMounted(() => {
 }
 
 .hour-label {
-  height: 60px;
+  height: 30px;
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;

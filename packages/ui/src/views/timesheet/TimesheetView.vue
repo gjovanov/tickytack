@@ -41,9 +41,10 @@
           @click-day="handleMonthDayClick"
         />
         <TimesheetSummary
-          v-if="timesheetStore.viewMode === 'weekly'"
           :entries="timesheetStore.entries"
           :week-start="timesheetStore.weekStart"
+          :current-date="timesheetStore.currentDate"
+          :mode="timesheetStore.viewMode"
         />
       </v-col>
       <v-col cols="12" md="3">

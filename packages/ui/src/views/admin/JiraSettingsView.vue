@@ -2,41 +2,9 @@
   <v-container>
     <h2 class="text-h5 mb-4">{{ $t('admin.jira.title') }}</h2>
 
-    <!-- Mode Toggle -->
-    <v-btn-toggle v-model="integrationMode" mandatory color="primary" class="mb-4">
-      <v-btn value="server" prepend-icon="mdi-server">
-        {{ $t('admin.jira.modeServer') }}
-      </v-btn>
-      <v-btn value="client" prepend-icon="mdi-laptop">
-        {{ $t('admin.jira.modeClient') }}
-      </v-btn>
-    </v-btn-toggle>
-
-    <v-alert
-      :type="integrationMode === 'client' ? 'info' : 'warning'"
-      variant="tonal"
-      density="compact"
-      class="mb-4"
-      max-width="600"
-    >
-      {{ integrationMode === 'client' ? $t('admin.jira.modeClientDesc') : $t('admin.jira.modeServerDesc') }}
-    </v-alert>
-
     <!-- Settings Card -->
     <v-card variant="outlined" class="pa-4 mb-4" max-width="600">
       <h3 class="text-h6 mb-3">{{ $t('admin.jira.connection') }}</h3>
-
-      <!-- Client-side credentials info -->
-      <v-alert
-        v-if="integrationMode === 'client'"
-        type="info"
-        variant="tonal"
-        density="compact"
-        class="mb-3"
-      >
-        {{ $t('admin.jira.clientCredentialsInfo') }}
-      </v-alert>
-
       <v-form ref="settingsFormRef">
         <v-text-field
           v-model="form.jiraBaseUrl"
@@ -69,7 +37,7 @@
           class="mb-2"
         />
 
-        <div class="d-flex ga-2 flex-wrap">
+        <div class="d-flex ga-2">
           <v-btn
             color="primary"
             :loading="saving"
@@ -84,14 +52,6 @@
           >
             <v-icon start>{{ connectionStatus === true ? 'mdi-check-circle' : connectionStatus === false ? 'mdi-close-circle' : 'mdi-connection' }}</v-icon>
             {{ $t('admin.jira.testConnection') }}
-          </v-btn>
-          <v-btn
-            v-if="integrationMode === 'client'"
-            variant="text"
-            color="error"
-            @click="handleClearCredentials"
-          >
-            {{ $t('admin.jira.clearCredentials') }}
           </v-btn>
         </div>
 
@@ -113,22 +73,11 @@
         >
           {{ $t('admin.jira.connectionFailed') }}
         </v-alert>
-
-        <!-- CORS warning for client mode -->
-        <v-alert
-          v-if="integrationMode === 'client' && connectionStatus === false"
-          type="warning"
-          variant="tonal"
-          density="compact"
-          class="mt-2"
-        >
-          {{ $t('admin.jira.corsWarning') }}
-        </v-alert>
       </v-form>
     </v-card>
 
     <!-- Import Card -->
-    <v-card variant="outlined" class="pa-4" max-width="800">
+    <v-card variant="outlined" class="pa-4 mb-4" max-width="800">
       <h3 class="text-h6 mb-3">{{ $t('admin.jira.importTitle') }}</h3>
 
       <v-btn
@@ -176,21 +125,7 @@
             :subtitle="proj.key"
           >
             <template #append>
-              <v-tooltip v-if="integrationMode === 'client'" :text="$t('admin.jira.attachmentsClientDisabled')" location="top">
-                <template #activator="{ props }">
-                  <v-checkbox
-                    v-bind="props"
-                    :model-value="false"
-                    disabled
-                    :label="$t('admin.jira.attachments')"
-                    density="compact"
-                    hide-details
-                    class="mr-2"
-                  />
-                </template>
-              </v-tooltip>
               <v-checkbox
-                v-else
                 v-model="proj.includeAttachments"
                 :label="$t('admin.jira.attachments')"
                 density="compact"
@@ -210,17 +145,6 @@
             </template>
           </v-list-item>
         </v-list>
-
-        <!-- Client-side progress -->
-        <v-alert
-          v-if="fetchProgress"
-          type="info"
-          variant="tonal"
-          density="compact"
-          class="mt-2"
-        >
-          {{ $t('admin.jira.fetchingIssues') }} {{ fetchProgress }}
-        </v-alert>
       </template>
 
       <!-- Import result -->
@@ -234,21 +158,80 @@
         {{ importResultMsg }}
       </v-alert>
     </v-card>
+
+    <!-- VPN Curl Examples (collapsible) -->
+    <v-card variant="outlined" class="pa-4" max-width="800">
+      <v-expansion-panels variant="accordion">
+        <v-expansion-panel>
+          <v-expansion-panel-title>
+            <v-icon class="mr-2">mdi-console</v-icon>
+            {{ $t('admin.jira.vpnCurlTitle') }}
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
+            <p class="text-body-2 text-medium-emphasis mb-4">
+              {{ $t('admin.jira.vpnCurlDesc') }}
+            </p>
+
+            <div class="text-subtitle-2 font-weight-bold mb-1">1. Fetch JIRA Projects</div>
+            <v-sheet color="grey-darken-4" class="pa-3 rounded mb-3" style="overflow-x: auto">
+              <code class="text-caption text-white" style="white-space: pre">curl -u "your-email@company.com:YOUR_API_TOKEN" \
+  "https://your-company.atlassian.net/rest/api/2/project" \
+  > projects.json</code>
+            </v-sheet>
+
+            <div class="text-subtitle-2 font-weight-bold mb-1">2. Fetch JIRA Issues</div>
+            <v-sheet color="grey-darken-4" class="pa-3 rounded mb-3" style="overflow-x: auto">
+              <code class="text-caption text-white" style="white-space: pre">curl -u "your-email@company.com:YOUR_API_TOKEN" \
+  "https://your-company.atlassian.net/rest/api/2/search?jql=project=PROJ&amp;maxResults=100&amp;fields=summary,description,status,priority,assignee,reporter" \
+  > tickets.json</code>
+            </v-sheet>
+
+            <div class="text-subtitle-2 font-weight-bold mb-1">Example projects.json</div>
+            <v-sheet color="grey-darken-4" class="pa-3 rounded mb-3" style="overflow-x: auto">
+              <code class="text-caption text-white" style="white-space: pre">[
+  { "id": "10001", "key": "PROJ", "name": "My Project", "description": "..." },
+  { "id": "10002", "key": "OPS", "name": "Operations", "description": "..." }
+]</code>
+            </v-sheet>
+
+            <div class="text-subtitle-2 font-weight-bold mb-1">Example tickets.json</div>
+            <v-sheet color="grey-darken-4" class="pa-3 rounded mb-3" style="overflow-x: auto">
+              <code class="text-caption text-white" style="white-space: pre">{
+  "issues": [
+    {
+      "id": "10100", "key": "PROJ-101",
+      "fields": {
+        "summary": "Fix login bug",
+        "status": { "name": "In Progress" },
+        "priority": { "name": "High" },
+        "assignee": { "emailAddress": "dev@company.com", "displayName": "Dev" }
+      }
+    }
+  ],
+  "total": 1, "startAt": 0, "maxResults": 100
+}</code>
+            </v-sheet>
+
+            <v-alert type="info" variant="tonal" density="compact" class="mt-2">
+              {{ $t('admin.jira.vpnCurlNote') }}
+            </v-alert>
+          </v-expansion-panel-text>
+        </v-expansion-panel>
+      </v-expansion-panels>
+    </v-card>
   </v-container>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/store/app'
 import { useSnackbar } from '@/composables/useSnackbar'
-import { useJiraCredentials } from '@/composables/useJiraCredentials'
 import httpClient from '@/services/http-client'
 
 const { t } = useI18n()
 const appStore = useAppStore()
 const { showSuccess, showError } = useSnackbar()
-const jiraCredentials = useJiraCredentials()
 
 const settingsFormRef = ref(null)
 const form = reactive({ jiraBaseUrl: '', jiraEmail: '', jiraApiToken: '' })
@@ -258,8 +241,6 @@ const saving = ref(false)
 const testing = ref(false)
 const connectionStatus = ref(null) // null | true | false
 
-const integrationMode = ref(localStorage.getItem('ttt_jira_mode') || 'server')
-
 const loadingProjects = ref(false)
 const jiraProjects = ref([])
 const selectedProjects = ref([])
@@ -267,7 +248,6 @@ const importingProjects = ref(false)
 const importedProjects = ref([])
 const importResultMsg = ref('')
 const importResultType = ref('info')
-const fetchProgress = ref('')
 
 const projectHeaders = computed(() => [
   { title: t('admin.jira.projectKey'), key: 'key', sortable: true },
@@ -279,32 +259,7 @@ const orgPrefix = computed(() => {
   return `/org/${appStore.currentOrg.id}/jira`
 })
 
-// Persist mode choice
-watch(integrationMode, (mode) => {
-  localStorage.setItem('ttt_jira_mode', mode)
-  connectionStatus.value = null
-  jiraProjects.value = []
-  selectedProjects.value = []
-  importedProjects.value = []
-  importResultMsg.value = ''
-  fetchProgress.value = ''
-  loadCredentialsForMode(mode)
-})
-
-function loadCredentialsForMode(mode) {
-  if (mode === 'client') {
-    form.jiraBaseUrl = jiraCredentials.jiraBaseUrl.value || ''
-    form.jiraEmail = jiraCredentials.jiraEmail.value || ''
-    form.jiraApiToken = jiraCredentials.jiraApiToken.value || ''
-    hasToken.value = !!jiraCredentials.jiraApiToken.value
-  }
-}
-
 onMounted(async () => {
-  if (integrationMode.value === 'client') {
-    loadCredentialsForMode('client')
-    return
-  }
   if (!appStore.currentOrg) return
   try {
     const res = await httpClient.get(`${orgPrefix.value}/settings`)
@@ -320,22 +275,6 @@ async function handleSave() {
   const { valid } = await settingsFormRef.value.validate()
   if (!valid) return
 
-  if (integrationMode.value === 'client') {
-    if (!form.jiraApiToken && !jiraCredentials.jiraApiToken.value) {
-      showError(t('admin.jira.tokenRequired'))
-      return
-    }
-    jiraCredentials.saveCredentials(
-      form.jiraBaseUrl,
-      form.jiraEmail,
-      form.jiraApiToken || jiraCredentials.jiraApiToken.value,
-    )
-    hasToken.value = true
-    showSuccess(t('admin.jira.saved'))
-    return
-  }
-
-  // Server-side save
   if (!form.jiraApiToken && hasToken.value) {
     showError(t('admin.jira.tokenRequired'))
     return
@@ -361,13 +300,8 @@ async function handleTestConnection() {
   testing.value = true
   connectionStatus.value = null
   try {
-    if (integrationMode.value === 'client') {
-      const client = jiraCredentials.createClient()
-      connectionStatus.value = await client.testConnection()
-    } else {
-      await httpClient.post(`${orgPrefix.value}/settings/test`)
-      connectionStatus.value = true
-    }
+    await httpClient.post(`${orgPrefix.value}/settings/test`)
+    connectionStatus.value = true
   } catch {
     connectionStatus.value = false
   } finally {
@@ -375,28 +309,13 @@ async function handleTestConnection() {
   }
 }
 
-function handleClearCredentials() {
-  jiraCredentials.clearCredentials()
-  form.jiraBaseUrl = ''
-  form.jiraEmail = ''
-  form.jiraApiToken = ''
-  hasToken.value = false
-  connectionStatus.value = null
-  showSuccess(t('admin.jira.credentialsCleared'))
-}
-
 async function loadJiraProjects() {
   loadingProjects.value = true
   try {
-    if (integrationMode.value === 'client') {
-      const client = jiraCredentials.createClient()
-      jiraProjects.value = await client.getProjects()
-    } else {
-      const res = await httpClient.get(`${orgPrefix.value}/projects`)
-      jiraProjects.value = res.data
-    }
+    const res = await httpClient.get(`${orgPrefix.value}/projects`)
+    jiraProjects.value = res.data
   } catch (err) {
-    showError(err.response?.data?.message || err.message || 'Failed to load JIRA projects')
+    showError(err.response?.data?.message || 'Failed to load JIRA projects')
   } finally {
     loadingProjects.value = false
   }
@@ -406,29 +325,20 @@ async function handleImportProjects() {
   importingProjects.value = true
   importResultMsg.value = ''
   try {
-    let r
-    if (integrationMode.value === 'client') {
-      const selected = jiraProjects.value.filter((p) => selectedProjects.value.includes(p.key))
-      const res = await httpClient.post(`${orgPrefix.value}/import/projects-data`, {
-        projects: selected,
-      })
-      r = res.data
-    } else {
-      const res = await httpClient.post(`${orgPrefix.value}/import/projects`, {
-        projectKeys: selectedProjects.value,
-      })
-      r = res.data
-    }
-
+    const res = await httpClient.post(`${orgPrefix.value}/import/projects`, {
+      projectKeys: selectedProjects.value,
+    })
+    const r = res.data
     importResultMsg.value = `${t('admin.jira.projectsImported')}: ${r.created} created, ${r.updated} updated`
     importResultType.value = r.errors?.length ? 'warning' : 'success'
 
+    // Build list for issue import
     importedProjects.value = selectedProjects.value.map((key) => {
       const p = jiraProjects.value.find((j) => j.key === key)
       return reactive({ key, name: p?.name || key, importing: false, includeAttachments: false })
     })
   } catch (err) {
-    showError(err.response?.data?.message || err.message || 'Failed to import projects')
+    showError(err.response?.data?.message || 'Failed to import projects')
   } finally {
     importingProjects.value = false
   }
@@ -437,28 +347,12 @@ async function handleImportProjects() {
 async function handleImportIssues(proj) {
   proj.importing = true
   importResultMsg.value = ''
-  fetchProgress.value = ''
   try {
-    let r
-    if (integrationMode.value === 'client') {
-      const client = jiraCredentials.createClient()
-      const allIssues = await client.getAllIssues(proj.key, (fetched, total) => {
-        fetchProgress.value = `${fetched} / ${total}`
-      })
-      fetchProgress.value = ''
-      const res = await httpClient.post(`${orgPrefix.value}/import/issues-data`, {
-        projectKey: proj.key,
-        issues: allIssues,
-      })
-      r = res.data
-    } else {
-      const res = await httpClient.post(`${orgPrefix.value}/import/issues`, {
-        projectKey: proj.key,
-        includeAttachments: proj.includeAttachments,
-      })
-      r = res.data
-    }
-
+    const res = await httpClient.post(`${orgPrefix.value}/import/issues`, {
+      projectKey: proj.key,
+      includeAttachments: proj.includeAttachments,
+    })
+    const r = res.data
     importResultMsg.value = `${proj.key}: ${r.created} created, ${r.updated} updated`
     if (r.errors?.length) {
       importResultMsg.value += `, ${r.errors.length} errors`
@@ -468,10 +362,9 @@ async function handleImportIssues(proj) {
     }
     showSuccess(importResultMsg.value)
   } catch (err) {
-    showError(err.response?.data?.message || err.message || 'Failed to import issues')
+    showError(err.response?.data?.message || 'Failed to import issues')
   } finally {
     proj.importing = false
-    fetchProgress.value = ''
   }
 }
 </script>

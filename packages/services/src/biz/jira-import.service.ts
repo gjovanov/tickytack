@@ -4,7 +4,7 @@ import type { Types } from 'mongoose'
 import { config } from 'config/src'
 import { projectDao, ticketDao, userDao } from '../dao'
 import { JiraService } from './jira.service'
-import type { JiraIssue, JiraProject as JiraProjectType } from './jira.types'
+import type { JiraIssue } from './jira.types'
 export type { ImportResult } from './jira.types'
 import type { ImportResult } from './jira.types'
 import { decrypt } from './crypto.service'
@@ -236,130 +236,5 @@ async function importSingleIssue(
     if (attachments.length) {
       await ticketDao.update(ticket._id as string, { attachments } as any)
     }
-  }
-}
-
-// --- Client-side import functions (accept pre-fetched JIRA data) ---
-
-export async function importJiraProjectsFromData(
-  orgId: string,
-  userId: string,
-  projects: JiraProjectType[],
-): Promise<ImportResult> {
-  const result: ImportResult = { created: 0, updated: 0, skipped: 0, errors: [] }
-
-  for (const jiraProject of projects) {
-    try {
-      const existing = await projectDao.findByKeyAndOrg(jiraProject.key, orgId)
-      if (existing) {
-        await projectDao.update(existing._id as string, {
-          name: jiraProject.name,
-          description: jiraProject.description || undefined,
-          source: 'jira',
-          sourceId: jiraProject.id,
-        })
-        result.updated++
-      } else {
-        await projectDao.create({
-          name: jiraProject.name,
-          key: jiraProject.key,
-          description: jiraProject.description || undefined,
-          orgId: orgId as unknown as Types.ObjectId,
-          source: 'jira',
-          sourceId: jiraProject.id,
-          isActive: true,
-        })
-        result.created++
-      }
-    } catch (err: any) {
-      logger.error(err, `Failed to import JIRA project ${jiraProject.key}`)
-      result.errors.push({ key: jiraProject.key, message: err.message })
-    }
-  }
-
-  return result
-}
-
-export async function importJiraIssuesFromData(
-  orgId: string,
-  userId: string,
-  projectKey: string,
-  issues: JiraIssue[],
-): Promise<ImportResult> {
-  const project = await projectDao.findByKeyAndOrg(projectKey, orgId)
-  if (!project) {
-    return {
-      created: 0,
-      updated: 0,
-      skipped: 0,
-      errors: [{ key: projectKey, message: 'Project not found in TickyTack. Import the project first.' }],
-    }
-  }
-
-  const result: ImportResult = { created: 0, updated: 0, skipped: 0, errors: [] }
-
-  const orgUsers = await userDao.findByOrgId(orgId)
-  const usersByEmail = new Map(orgUsers.map((u) => [u.email.toLowerCase(), u]))
-
-  for (const issue of issues) {
-    try {
-      await importSingleIssueFromData(
-        issue,
-        orgId,
-        userId,
-        project._id as Types.ObjectId,
-        usersByEmail,
-      )
-      const existing = await ticketDao.findByKeyAndOrg(issue.key, orgId)
-      if (existing?.createdAt.getTime() === existing?.updatedAt.getTime()) {
-        result.created++
-      } else {
-        result.updated++
-      }
-    } catch (err: any) {
-      logger.error(err, `Failed to import JIRA issue ${issue.key}`)
-      result.errors.push({ key: issue.key, message: err.message })
-    }
-  }
-
-  return result
-}
-
-async function importSingleIssueFromData(
-  issue: JiraIssue,
-  orgId: string,
-  fallbackReporterId: string,
-  projectId: Types.ObjectId,
-  usersByEmail: Map<string, any>,
-): Promise<void> {
-  const assignee = issue.fields.assignee?.emailAddress
-    ? usersByEmail.get(issue.fields.assignee.emailAddress.toLowerCase())
-    : null
-  const reporter = issue.fields.reporter?.emailAddress
-    ? usersByEmail.get(issue.fields.reporter.emailAddress.toLowerCase())
-    : null
-
-  const ticketData: Record<string, unknown> = {
-    key: issue.key,
-    summary: issue.fields.summary,
-    description: issue.fields.description || undefined,
-    projectId,
-    orgId: orgId as unknown as Types.ObjectId,
-    assigneeId: assignee?._id || null,
-    reporterId: reporter?._id || (fallbackReporterId as unknown as Types.ObjectId),
-    status: mapStatus(issue.fields.status.name),
-    priority: mapPriority(issue.fields.priority?.name),
-    sequenceNumber: extractSequenceNumber(issue.key),
-    source: 'jira' as const,
-    sourceId: issue.id,
-  }
-
-  const existing = await ticketDao.findByKeyAndOrg(issue.key, orgId)
-
-  if (existing) {
-    delete ticketData.reporterId
-    await ticketDao.update(existing._id as string, ticketData)
-  } else {
-    await ticketDao.create(ticketData as any)
   }
 }
