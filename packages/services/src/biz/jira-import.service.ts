@@ -4,7 +4,7 @@ import type { Types } from 'mongoose'
 import { config } from 'config/src'
 import { projectDao, ticketDao, userDao } from '../dao'
 import { JiraService } from './jira.service'
-import type { JiraIssue } from './jira.types'
+import type { JiraIssue, JiraProject as JiraProjectType, JiraSearchResult } from './jira.types'
 export type { ImportResult } from './jira.types'
 import type { ImportResult } from './jira.types'
 import { decrypt } from './crypto.service'
@@ -237,4 +237,117 @@ async function importSingleIssue(
       await ticketDao.update(ticket._id as string, { attachments } as any)
     }
   }
+}
+
+// --- JSON file import functions ---
+
+export async function importProjectsFromJson(
+  orgId: string,
+  userId: string,
+  projects: JiraProjectType[],
+): Promise<ImportResult> {
+  const result: ImportResult = { created: 0, updated: 0, skipped: 0, errors: [] }
+
+  for (const proj of projects) {
+    if (!proj.key || !proj.name) {
+      result.errors.push({ key: proj.key || '?', message: 'Missing key or name' })
+      continue
+    }
+    try {
+      const existing = await projectDao.findByKeyAndOrg(proj.key, orgId)
+      if (existing) {
+        await projectDao.update(existing._id as string, {
+          name: proj.name,
+          description: proj.description || undefined,
+          source: 'jira',
+          sourceId: proj.id,
+        })
+        result.updated++
+      } else {
+        await projectDao.create({
+          name: proj.name,
+          key: proj.key,
+          description: proj.description || undefined,
+          orgId: orgId as unknown as Types.ObjectId,
+          source: 'jira',
+          sourceId: proj.id,
+          isActive: true,
+        })
+        result.created++
+      }
+    } catch (err: any) {
+      logger.error(err, `Failed to import project ${proj.key}`)
+      result.errors.push({ key: proj.key, message: err.message })
+    }
+  }
+
+  return result
+}
+
+export async function importIssuesFromJson(
+  orgId: string,
+  userId: string,
+  searchResult: JiraSearchResult,
+): Promise<ImportResult> {
+  const result: ImportResult = { created: 0, updated: 0, skipped: 0, errors: [] }
+
+  if (!searchResult.issues?.length) {
+    return result
+  }
+
+  // Determine project key from first issue
+  const firstKey = searchResult.issues[0].key
+  const projectKey = firstKey.replace(/-\d+$/, '')
+
+  const project = await projectDao.findByKeyAndOrg(projectKey, orgId)
+  if (!project) {
+    return {
+      created: 0, updated: 0, skipped: 0,
+      errors: [{ key: projectKey, message: 'Project not found in TickyTack. Import the project first.' }],
+    }
+  }
+
+  const orgUsers = await userDao.findByOrgId(orgId)
+  const usersByEmail = new Map(orgUsers.map((u) => [u.email.toLowerCase(), u]))
+
+  for (const issue of searchResult.issues) {
+    try {
+      const assignee = issue.fields.assignee?.emailAddress
+        ? usersByEmail.get(issue.fields.assignee.emailAddress.toLowerCase())
+        : null
+      const reporter = issue.fields.reporter?.emailAddress
+        ? usersByEmail.get(issue.fields.reporter.emailAddress.toLowerCase())
+        : null
+
+      const ticketData: Record<string, unknown> = {
+        key: issue.key,
+        summary: issue.fields.summary,
+        description: issue.fields.description || undefined,
+        projectId: project._id,
+        orgId: orgId as unknown as Types.ObjectId,
+        assigneeId: assignee?._id || null,
+        reporterId: reporter?._id || (userId as unknown as Types.ObjectId),
+        status: mapStatus(issue.fields.status.name),
+        priority: mapPriority(issue.fields.priority?.name),
+        sequenceNumber: extractSequenceNumber(issue.key),
+        source: 'jira' as const,
+        sourceId: issue.id,
+      }
+
+      const existing = await ticketDao.findByKeyAndOrg(issue.key, orgId)
+      if (existing) {
+        delete ticketData.reporterId
+        await ticketDao.update(existing._id as string, ticketData)
+        result.updated++
+      } else {
+        await ticketDao.create(ticketData as any)
+        result.created++
+      }
+    } catch (err: any) {
+      logger.error(err, `Failed to import issue ${issue.key}`)
+      result.errors.push({ key: issue.key, message: err.message })
+    }
+  }
+
+  return result
 }

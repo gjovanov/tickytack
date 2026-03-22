@@ -55,6 +55,8 @@ export default {
     importIssues: 'Import Issues',
     importIssuesBtn: 'Import Issues',
     attachments: 'Attachments',
+    importProjectsJson: 'Import projects.json',
+    importIssuesJson: 'Import tickets.json',
     vpnCurlTitle: 'VPN / Curl Examples (for on-premise JIRA)',
     vpnCurlDesc: 'If the server cannot reach your JIRA instance, you can fetch data from a VPN-connected machine using curl and then import via the UI above.',
     vpnCurlNote: 'For paginated results (>100 issues), increment startAt in the URL: &startAt=100, &startAt=200, etc.',

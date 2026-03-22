@@ -5,7 +5,7 @@ import NotFoundError from '../../errors/NotFoundError'
 import { userDao } from 'services/src/dao'
 import { encrypt, decrypt } from 'services/src/biz/crypto.service'
 import { JiraService } from 'services/src/biz/jira.service'
-import { importJiraProjects, importJiraIssues } from 'services/src/biz/jira-import.service'
+import { importJiraProjects, importJiraIssues, importProjectsFromJson, importIssuesFromJson } from 'services/src/biz/jira-import.service'
 import { config } from 'config/src'
 
 async function getUserJiraSettings(userId: string) {
@@ -111,6 +111,60 @@ export const jiraController = new Elysia({ prefix: '/org/:orgId/jira' })
       body: t.Object({
         projectKey: t.String(),
         includeAttachments: t.Optional(t.Boolean()),
+      }),
+    },
+  )
+  // Import projects from JSON file (projects.json from curl)
+  .post(
+    '/import/projects-json',
+    async ({ params: { orgId }, body, user }) => {
+      if (!user) throw new UnauthorizedError()
+      const file = body.file
+      if (!file) throw new BadRequestError('No file provided')
+
+      let projects: any[]
+      try {
+        const text = await file.text()
+        projects = JSON.parse(text)
+        if (!Array.isArray(projects)) {
+          throw new Error('Expected a JSON array of projects')
+        }
+      } catch (err: any) {
+        throw new BadRequestError(`Invalid JSON: ${err.message}`)
+      }
+
+      return importProjectsFromJson(orgId, user.id, projects)
+    },
+    {
+      body: t.Object({
+        file: t.File({ type: 'application/json' }),
+      }),
+    },
+  )
+  // Import issues from JSON file (tickets.json from curl)
+  .post(
+    '/import/issues-json',
+    async ({ params: { orgId }, body, user }) => {
+      if (!user) throw new UnauthorizedError()
+      const file = body.file
+      if (!file) throw new BadRequestError('No file provided')
+
+      let searchResult: any
+      try {
+        const text = await file.text()
+        searchResult = JSON.parse(text)
+        if (!searchResult.issues || !Array.isArray(searchResult.issues)) {
+          throw new Error('Expected JSON with an "issues" array (JIRA search result format)')
+        }
+      } catch (err: any) {
+        throw new BadRequestError(`Invalid JSON: ${err.message}`)
+      }
+
+      return importIssuesFromJson(orgId, user.id, searchResult)
+    },
+    {
+      body: t.Object({
+        file: t.File({ type: 'application/json' }),
       }),
     },
   )

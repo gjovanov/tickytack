@@ -80,15 +80,47 @@
     <v-card variant="outlined" class="pa-4 mb-4" max-width="800">
       <h3 class="text-h6 mb-3">{{ $t('admin.jira.importTitle') }}</h3>
 
-      <v-btn
-        variant="outlined"
-        :loading="loadingProjects"
-        prepend-icon="mdi-refresh"
-        @click="loadJiraProjects"
-        class="mb-4"
-      >
-        {{ $t('admin.jira.loadProjects') }}
-      </v-btn>
+      <div class="d-flex ga-2 mb-4 flex-wrap">
+        <v-btn
+          variant="outlined"
+          :loading="loadingProjects"
+          prepend-icon="mdi-refresh"
+          @click="loadJiraProjects"
+        >
+          {{ $t('admin.jira.loadProjects') }}
+        </v-btn>
+        <v-btn
+          variant="outlined"
+          :loading="importingProjectsJson"
+          prepend-icon="mdi-file-upload-outline"
+          @click="projectsFileInput?.click()"
+        >
+          {{ $t('admin.jira.importProjectsJson') }}
+        </v-btn>
+        <v-btn
+          variant="outlined"
+          :loading="importingIssuesJson"
+          prepend-icon="mdi-file-upload-outline"
+          @click="issuesFileInput?.click()"
+        >
+          {{ $t('admin.jira.importIssuesJson') }}
+        </v-btn>
+      </div>
+      <!-- Hidden file inputs -->
+      <input
+        ref="projectsFileInput"
+        type="file"
+        accept=".json,application/json"
+        style="display: none"
+        @change="handleProjectsJsonUpload"
+      />
+      <input
+        ref="issuesFileInput"
+        type="file"
+        accept=".json,application/json"
+        style="display: none"
+        @change="handleIssuesJsonUpload"
+      />
 
       <v-data-table
         v-if="jiraProjects.length"
@@ -248,6 +280,10 @@ const importingProjects = ref(false)
 const importedProjects = ref([])
 const importResultMsg = ref('')
 const importResultType = ref('info')
+const importingProjectsJson = ref(false)
+const importingIssuesJson = ref(false)
+const projectsFileInput = ref(null)
+const issuesFileInput = ref(null)
 
 const projectHeaders = computed(() => [
   { title: t('admin.jira.projectKey'), key: 'key', sortable: true },
@@ -365,6 +401,58 @@ async function handleImportIssues(proj) {
     showError(err.response?.data?.message || 'Failed to import issues')
   } finally {
     proj.importing = false
+  }
+}
+
+async function handleProjectsJsonUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  importingProjectsJson.value = true
+  importResultMsg.value = ''
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await httpClient.post(`${orgPrefix.value}/import/projects-json`, formData)
+    const r = res.data
+    importResultMsg.value = `${t('admin.jira.projectsImported')}: ${r.created} created, ${r.updated} updated`
+    if (r.errors?.length) {
+      importResultMsg.value += `, ${r.errors.length} errors`
+      importResultType.value = 'warning'
+    } else {
+      importResultType.value = 'success'
+    }
+    showSuccess(importResultMsg.value)
+  } catch (err) {
+    showError(err.response?.data?.message || 'Failed to import projects JSON')
+  } finally {
+    importingProjectsJson.value = false
+    event.target.value = ''
+  }
+}
+
+async function handleIssuesJsonUpload(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+  importingIssuesJson.value = true
+  importResultMsg.value = ''
+  try {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await httpClient.post(`${orgPrefix.value}/import/issues-json`, formData)
+    const r = res.data
+    importResultMsg.value = `Issues: ${r.created} created, ${r.updated} updated`
+    if (r.errors?.length) {
+      importResultMsg.value += `, ${r.errors.length} errors`
+      importResultType.value = 'warning'
+    } else {
+      importResultType.value = 'success'
+    }
+    showSuccess(importResultMsg.value)
+  } catch (err) {
+    showError(err.response?.data?.message || 'Failed to import issues JSON')
+  } finally {
+    importingIssuesJson.value = false
+    event.target.value = ''
   }
 }
 </script>

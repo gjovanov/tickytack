@@ -55,6 +55,8 @@ export default {
     importIssues: 'Tickets importieren',
     importIssuesBtn: 'Tickets importieren',
     attachments: 'Anhänge',
+    importProjectsJson: 'projects.json importieren',
+    importIssuesJson: 'tickets.json importieren',
     vpnCurlTitle: 'VPN / Curl-Beispiele (für On-Premise JIRA)',
     vpnCurlDesc: 'Wenn der Server Ihre JIRA-Instanz nicht erreichen kann, können Sie Daten von einem VPN-verbundenen Rechner per curl abrufen und dann über die Oberfläche oben importieren.',
     vpnCurlNote: 'Für paginierte Ergebnisse (>100 Tickets) erhöhen Sie startAt in der URL: &startAt=100, &startAt=200 usw.',
