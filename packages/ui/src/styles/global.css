@@ -73,10 +73,49 @@
   border-bottom: var(--ttt-card-border) !important;
 }
 
-/* ─── Data Tables ─── */
+/* ─── Data Tables (edumin-inspired) ─── */
 .v-application .v-data-table {
   border-radius: var(--ttt-card-radius) !important;
   overflow: hidden;
+}
+
+.v-application .v-data-table-header th,
+.v-application .v-data-table thead th {
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.v-theme--light .v-data-table-header th,
+.v-theme--light .v-data-table thead th {
+  background: #f8f6f4 !important;
+  color: #312a2a !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+.v-theme--dark .v-data-table-header th,
+.v-theme--dark .v-data-table thead th {
+  background: #151210 !important;
+  color: #e0d8d0 !important;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.v-application .v-data-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.v-theme--light .v-data-table tbody tr:hover td {
+  background: #fdf8f5 !important;
+}
+
+.v-theme--dark .v-data-table tbody tr:hover td {
+  background: #252018 !important;
+}
+
+.v-application .v-data-table tbody td {
+  border-bottom: 1px solid var(--ttt-divider) !important;
 }
 
 /* ─── Expansion Panels ─── */

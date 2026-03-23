@@ -37,9 +37,10 @@
 import { ref, computed, onBeforeUnmount } from 'vue'
 import TimeEntryCard from './TimeEntryCard.vue'
 
-const START_HOUR = 6
-const END_HOUR = 22
-const MAX_MINUTES = (END_HOUR - START_HOUR) * 60 // 960
+const DISPLAY_START = 6
+const DISPLAY_END = 22
+const DISPLAY_HOURS = DISPLAY_END - DISPLAY_START // 16 visible hours
+const MAX_MINUTES = 24 * 60 // Full 24h for entry placement
 const DRAG_THRESHOLD = 5 // px
 const PX_PER_MINUTE = 0.5
 const HOUR_HEIGHT = 30 // px per hour slot
@@ -52,7 +53,7 @@ const props = defineProps({
 
 const emit = defineEmits(['click-slot', 'click-entry', 'resize-entry', 'drop-entry', 'drag-select'])
 
-const hours = Array.from({ length: 17 }, (_, i) => i + START_HOUR)
+const hours = Array.from({ length: DISPLAY_HOURS + 1 }, (_, i) => i + DISPLAY_START)
 const isDragOver = ref(false)
 
 // Drag-select state
@@ -64,11 +65,13 @@ const dragCurrentMinutes = ref(0)
 let columnRect = null
 
 function snapMinutes(minutes) {
-  return Math.min(Math.max(Math.round(minutes / 15) * 15, 0), MAX_MINUTES)
+  // Clamp to visible display range for drag interactions
+  const displayMax = DISPLAY_HOURS * 60
+  return Math.min(Math.max(Math.round(minutes / 15) * 15, 0), displayMax)
 }
 
 function minutesToTime(minutes) {
-  const totalMinutes = minutes + START_HOUR * 60
+  const totalMinutes = minutes + DISPLAY_START * 60
   const h = Math.floor(totalMinutes / 60)
   const m = totalMinutes % 60
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
@@ -127,7 +130,7 @@ function handleMouseUp(event) {
 
   if (dy < DRAG_THRESHOLD) {
     // Treat as click — emit click-slot with the hour
-    const hour = Math.floor(dragStartMinutes.value / 60) + START_HOUR
+    const hour = Math.floor(dragStartMinutes.value / 60) + DISPLAY_START
     emit('click-slot', hour)
   } else {
     // Drag completed — compute start/end, swap if needed
@@ -158,7 +161,7 @@ onBeforeUnmount(() => {
 
 function getEntryPosition(entry) {
   const [startH, startM] = entry.startTime.split(':').map(Number)
-  const topOffset = ((startH - START_HOUR) * 60 + startM) * PX_PER_MINUTE
+  const topOffset = ((startH - DISPLAY_START) * 60 + startM) * PX_PER_MINUTE
   return {
     top: `${topOffset}px`,
   }
@@ -182,7 +185,7 @@ function handleDrop(e) {
     const y = e.clientY - rect.top - grabOffset
     const rawMinutes = Math.max(Math.floor(y / PX_PER_MINUTE), 0)
     const snappedMinutes = Math.round(rawMinutes / 15) * 15
-    const dropHour = Math.floor(snappedMinutes / 60) + START_HOUR
+    const dropHour = Math.floor(snappedMinutes / 60) + DISPLAY_START
     const dropMinute = snappedMinutes % 60
     const newStartTime = `${dropHour.toString().padStart(2, '0')}:${dropMinute.toString().padStart(2, '0')}`
 
@@ -207,7 +210,7 @@ function handleDrop(e) {
 .daily-column {
   position: relative;
   border-left: 1px solid rgba(var(--v-border-color), 0.1);
-  min-height: calc(17 * 30px);
+  min-height: calc(17 * 30px); /* 16 display hours + 1 */
   user-select: none;
 }
 

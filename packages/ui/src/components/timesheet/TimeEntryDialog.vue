@@ -108,6 +108,8 @@ import { useI18n } from 'vue-i18n'
 import { useTicketsStore } from '@/store/tickets'
 import { format } from 'date-fns'
 
+let searchTimer = null
+
 const { t } = useI18n()
 const ticketsStore = useTicketsStore()
 
@@ -207,18 +209,25 @@ async function loadInitialTickets() {
   }
 }
 
-async function searchTickets(query) {
+function searchTickets(query) {
   if (query == null) return
+  if (searchTimer) clearTimeout(searchTimer)
+
+  // Require at least 2 chars for server search (performance with 10k+ tickets)
+  if (query.length > 0 && query.length < 2) return
+
   searchLoading.value = true
-  try {
-    const results = await ticketsStore.searchTickets(query)
-    ticketOptions.value = results.map((t) => ({
-      value: t._id,
-      title: `${t.key} - ${t.summary}`,
-    }))
-  } finally {
-    searchLoading.value = false
-  }
+  searchTimer = setTimeout(async () => {
+    try {
+      const results = await ticketsStore.searchTickets(query)
+      ticketOptions.value = results.map((t) => ({
+        value: t._id,
+        title: `${t.key} - ${t.summary}`,
+      }))
+    } finally {
+      searchLoading.value = false
+    }
+  }, 300) // 300ms debounce
 }
 
 async function handleSave() {

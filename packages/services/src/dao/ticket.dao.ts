@@ -50,16 +50,20 @@ class TicketDao extends BaseDao<ITicket> {
   }
 
   async searchByKey(orgId: string, query: string): Promise<ITicket[]> {
+    const filter: Record<string, unknown> = { orgId }
+    if (query) {
+      filter.$or = [
+        { key: { $regex: query, $options: 'i' } },
+        { summary: { $regex: query, $options: 'i' } },
+      ]
+    }
     return this.model
-      .find({
-        orgId,
-        $or: [
-          { key: { $regex: query, $options: 'i' } },
-          { summary: { $regex: query, $options: 'i' } },
-        ],
-      })
+      .find(filter)
+      .select('key summary projectId status priority')
       .populate('projectId', 'name key color')
+      .sort({ key: 1 })
       .limit(20)
+      .lean()
       .exec()
   }
 }

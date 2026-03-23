@@ -78,5 +78,6 @@ ticketSchema.index({ key: 1, orgId: 1 }, { unique: true })
 ticketSchema.index({ projectId: 1, orgId: 1 })
 ticketSchema.index({ orgId: 1, status: 1 })
 ticketSchema.index({ orgId: 1, priority: 1 })
+ticketSchema.index({ orgId: 1, key: 1, summary: 'text' })
 
 export const Ticket = model<ITicket>('Ticket', ticketSchema)
