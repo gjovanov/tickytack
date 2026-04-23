@@ -6,7 +6,9 @@ WORKDIR /app
 
 ENV VITE_BACKEND_URL=""
 
-RUN bun install && \
+# --linker hoisted materialises all deps under /app/node_modules (no symlinks to
+# /root/.bun cache), so the final-stage COPY picks everything up.
+RUN bun install --linker hoisted && \
     cd /app/packages/ui && \
     bun run build
 
