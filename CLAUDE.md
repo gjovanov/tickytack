@@ -32,3 +32,22 @@ git commit -am "chore(k8s): bump tickytack to $TAG" && git push
 argocd app sync tickytack --grpc-web
 curl -sI https://tickytack.app/
 ```
+
+## K8s deployment placement
+
+Cluster has three zones via `topology.kubernetes.io/zone`: `mars`,
+`zeus`, `jupiter` (one master + one worker VM per bare-metal host).
+Apps are split by tier (added 2026-05-01 after a mars-host overload
+incident):
+
+  - `tier=high-performance` (zeus + jupiter workers): this app, plus
+    roomler / roomler-ai / oxmux / lgr / purestat / tickytack / clawui
+    (when migrated to K8s).
+  - `tier=utility` (mars worker): bauleiter, regal, monitoring stack,
+    docker registry, image builds.
+
+Enforced via a Kustomize patch in `tickytack-deploy/k8s/overlays/prod/
+kustomization.yaml` that puts a required `nodeAffinity` on every
+Deployment + StatefulSet. Hostname pins in `base/` are retained where
+the StatefulSet PVC uses node-local storage; the tier requirement is
+an *additional* constraint — both must match.
