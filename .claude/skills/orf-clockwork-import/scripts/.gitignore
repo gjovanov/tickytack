@@ -1,0 +1,4 @@
+# credentials — never commit these
+.atl_base
+.atl_email
+.atl_token

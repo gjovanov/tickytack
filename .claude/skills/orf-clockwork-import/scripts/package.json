@@ -1,0 +1,7 @@
+{
+  "name": "orf-clockwork-scripts",
+  "private": true,
+  "type": "module",
+  "description": "Self-contained so the skill runs from any cwd; exceljs is the only dependency.",
+  "dependencies": { "exceljs": "^4.4.0" }
+}
