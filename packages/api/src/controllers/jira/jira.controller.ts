@@ -137,7 +137,10 @@ export const jiraController = new Elysia({ prefix: '/org/:orgId/jira' })
     },
     {
       body: t.Object({
-        file: t.File({ type: 'application/json' }),
+        // NB: no `type` constraint — Elysia validates it via `file-type` content
+        // sniffing, which cannot detect JSON, so any declared MIME would 422.
+        // The handler above already parses and validates the JSON shape.
+        file: t.File(),
       }),
     },
   )
@@ -164,7 +167,10 @@ export const jiraController = new Elysia({ prefix: '/org/:orgId/jira' })
     },
     {
       body: t.Object({
-        file: t.File({ type: 'application/json' }),
+        // NB: no `type` constraint — Elysia validates it via `file-type` content
+        // sniffing, which cannot detect JSON, so any declared MIME would 422.
+        // The handler above already parses and validates the JSON shape.
+        file: t.File(),
       }),
     },
   )
