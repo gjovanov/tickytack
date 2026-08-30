@@ -1,0 +1,33 @@
+# Keep the build context clean.
+#
+# `COPY . /app` runs before `bun install`, so anything here would land in the
+# builder image. Stale per-package node_modules are actively harmful: Bun's
+# isolated linker leaves symlinks like
+#   packages/api/node_modules/elysia -> ../../../node_modules/.bun/elysia@.../node_modules/elysia
+# which shadow the `--linker hoisted` install at /app/node_modules and dangle in
+# the final stage, producing `ENOENT reading "/app/packages/api/node_modules/elysia"`
+# at startup.
+node_modules/
+**/node_modules/
+
+# Secrets — the container gets its env from the k8s `tickytack-secret`, and Bun
+# tolerates a missing --env-file, so this must never be baked into the image.
+.env
+.env.*
+!.env.example
+
+# Build output (regenerated in the builder stage)
+packages/ui/dist/
+data/
+
+# Test / tooling artifacts
+packages/e2e/test-results/
+packages/e2e/playwright-report/
+coverage/
+
+# Not needed at build or runtime
+.git/
+.github/
+*.mp4
+docs/
+README.md
