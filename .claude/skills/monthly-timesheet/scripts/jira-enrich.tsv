@@ -1,0 +1,87 @@
+PCON-116	X3	Pentest - PoC - Backend für ein 3-schichten Modell
+PCON-141	C3	AS CBEs fehlend
+PCON-142	C3	Belegeliste CBE AS Performance
+PCON-144	C0	Anpassung KV Prüfvermerk PPT-Bericht
+PCON-149	O3	Bericht 900 - Performance Analyse
+PCON-155	X3	Berichtswesen Excel Export funktioniert nicht
+PCON-158	C3	FN_Report_80x_Basis Performance Optimierung
+PCON-159	C3	KOBE Felder freischalten
+PCON-169	C3	DWH-Import größere Datenmenge von COA & Belege
+PCON-173	C3	P.CON: 2024 - Delta Beleg-Summierung <> PSP-Element/Pr-Ebene
+PCON-174	C3	Suche CO-Auftrag im P.CON
+PCON-175	X3	Projektbericht beim Export mit der „alten“ Anlage
+PCON-180	C3	Schulung - Belege Einspielen - 2025-06
+PCON-184	T3	SOAP-Service PCON über infra:assistent 2.0 Servicehub - ÖBB-Test
+PCON-186	C3	Automatische Entsperrung über Nacht funktioniert nicht für KNA-Tabellen
+PCON-187	C3	Fehlender Beleg in P.CON
+PCON-188	E3	Belege 95/97 werden nicht importiert am 4.6.2025
+PCON-191	C3	Kostenbeitragsplanung_Fehlender Beleg in Vertrag
+PCON-192	C3	Kostenbeitragsplanung_Datensatz Bereinigung
+PCON-194	C0	Kostenbeitrag_Sperre bei VE5er Verträgen
+PCON-199	C0	P.CON: 4. Ebene ohne automatischer Anlegung eines AS
+PCON-222	C1	P.CON<-->SAP: Belege fehlen + Differenzen in der Rechnungssumme
+PCON-225	C0	CrystalReports Preview
+PCON-229	O0	Meldung beim Schmelzen: kein Leistungsbereich hinterlegt
+PCON-233	C0	WAGA: Logbuch-Meldung führt zur gleichzeitiger Bestellung- und im Ziel-Projektierung
+PCON-238	C2	Fipsy Felder Mapping Analyse
+PCON-239	C2	Indizen optimieren - Tabellen AGGR_CBE und BWP
+PCON-242	X0	Timeout bei Berichtsgenerierung 795
+PCON-243	A0	Fehler beim Öffnen eines CBE-Bestellung_WG: Absturz P.CON
+PCON-244	A0	Problem_835er Bericht aus Basisversion mit Bezug 2.forecast 2025
+PCON-247	C0	800er Bericht Anzeige
+PCON-249	C1	Indizen optimieren - Tabellen CBE, CBE_Zusatzdaten und andere CBE Satellit-Tabellen
+PCON-256	O1	DB as Code für Preview und Prod Schema
+PCON-261	C0	AAR E-WF(I): Schwesternauftrag erstellen
+PCON-268	C1	Indizes optimieren - Tabellen PSP_Element, Projekt, Beleg (restliche Tabellen)
+PCON-271	O1	Schema in Preview DB wiederherstellen, nach dem Einspielen von Prod
+PCON-272	C1	Massenänderung Einkäufergruppen funktioniert nur teilweise
+PCON-275	O0	P.CON: keine Istkosten da
+PCON-281	P1	Wiederkehrende Probleme beim Speichern des EK-PT
+PCON-282	O0	Support Allg.
+PCON-283	O0	Meetings
+PCON-284	O0	Releases / Deployment
+PCON-286	C0	CBE Speichern trotz Delta
+PCON-289	C0	KOBE fehlende Verträge
+PCON-290	O1	Negative Schmelzungen von LB AMU210
+PCON-291	C0	CBE noch aufzuteilen Suche Performance
+PCON-292	C2	Neue Fehlermeldung - P.CON Absturz nach Suche von abgeschlossenen
+PCON-293	C1	Transcaction Deadlock bei der SP Belege_Fehlzuordnung
+PCON-295	C1	Spring.Dao.DeadlockLoserDataAccessException
+PCON-297	C0	Zwischenspeicher OutOfMemoryException
+PCON-307	O1	Schnittstellentest P.CON Prev <> FIPSY Test
+PCON-322	C1	P.CON Schulung Belege
+PCON-332	P0	Performance-Memory Leak: PCON Client - Kein Bitmap Disposal
+PCON-334	C1	Richtigstellung fehlender Schmelzvorgänge CBE
+PCON-337	A2	KoBe-Bericht 2026
+PCON-343	O1	ÖBB-Laptop Installierungen & Setup
+PCON-344	A2	Belegzuweisung folgt welchen Regeln?
+PCON-345	T0	Performance Wochenbericht
+PCON-352	T2	Fehlende Schmelzungen und Änderungen auf Datenbank
+PCON-353	T1	Umstellung PCO-Stv auf Leer
+PCON-360	T1	Schulung Belege einspielen - 2026-06
+PCON-361	C1	Fehlende Schmelzung bei Änderung Höhe BGR
+PCON-362	O1	Systemmeldungen --> Belege zu den EK-CBE
+PCON-363	C1	Fehlermeldung Projektbericht
+PCON-364	C1	Fehlende Schmelzung und Verlauf bei Änderung BGR
+PCON-368	P2	Fehlende AS-CBEs in PROD
+PCON-369	O1	CommandCallback SQL - Die Transaktion (Deadlock)
+PCONNXT-7	E3	PCON+ (Schnelle-Suche übers Autocomplete und Detaillierte-Suche übers Dialog)
+PCONNXT-8	A0	Prototyp KV Prüfvermerk
+PCONNXT-9	A2	Kostenänderung für Projekte und PSP_Elemente
+PCONNXT-10	A2	CBE BWP-Schichtung, -COA, Fipsy, Obligo Daten
+PCONNXT-11	T2	Bericht 900 (PCON+)
+PCONNXT-12	E1	BGRV Tabellen/Daten importieren ins PCON+
+PCONNXT-13	A2	Report 830 (PCON+)
+PCONNXT-16	E0	Bericht 900 generieren
+PCONNXT-17	A2	Doku: BF.xx.xx + Bericht 830
+PCONNXT-18	E2	Report 901 (PCON+)
+PCONNXT-21	O0	KOBE Kostenbeiträge
+PCONNXT-48	O2	PCON+ Infrastruktur, BCC Abstimmungen
+PCONNXT-49	X1	P.CON: tägliche Aktualisierung für Cognos-Export
+PCONNXT-51	O2	PCON+ OpenShift Performance
+PCONNXT-52	O2	KOBE Implementierung (UI, API, DB)
+PCONNXT-53	O1	Sync Mechanism
+PCON-114	C0	[in JIRA nicht mehr vorhanden] P.CON Einführung, Demo
+PCON-166	E3	[verschoben nach PCONNXT-7] PCON+ Schnelle-Suche übers Autocomplete
+PCON-248	E0	[verschoben nach PCONNXT-16] Bericht 900 generieren
+PCON-367	T3	Fehler im Bericht 600, Rechtschreibung, Systemangabe, Kommaausrichtung
