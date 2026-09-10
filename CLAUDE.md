@@ -2,6 +2,21 @@
 
 Bun/Elysia.js API + Vue 3 SPA (Vuetify 3, Pinia, Vite). Live at https://tickytack.app.
 
+## Client timesheet skills — not in this repo
+
+The workflows that import real client hours into TickyTack live in the **private**
+repo [`gjovanov/tickytack-skills`](https://github.com/gjovanov/tickytack-skills).
+They carry client-identifying detail and must never be committed here.
+
+Clone that repo beside this one and expose it at `.claude/skills/` (a junction or
+symlink is fine); the path is gitignored here. Two of its scripts import this
+repo's `parseTimesheetXLSX` from `packages/reporting/excel/` to verify staged
+files before import — set `TT_REPO` if this checkout is not at
+`C:\dev\gjovanov\tickytack`.
+
+**Do not commit anything under `.claude/skills/` to this repo**, and keep client
+names, identifiers and file names out of this file.
+
 ## Deployment
 
 Deployment configuration lives in sibling repo `../tickytack-deploy/` (GitHub: `gjovanov/tickytack-deploy`). Kustomize manifests under `k8s/base/` + `k8s/overlays/prod/`. NodePort 30031.

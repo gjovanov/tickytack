@@ -6,3 +6,7 @@ dist/
 .DS_Store
 coverage/
 tmp/
+
+# Client timesheet skills live in the private gjovanov/tickytack-skills repo.
+# This path is where they are exposed locally (clone or junction) — never commit it.
+.claude/skills/
