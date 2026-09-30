@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 
 test.describe('OAuth Login', () => {
   test.beforeEach(async ({ page }) => {
@@ -54,18 +54,21 @@ test.describe('OAuth Login', () => {
     expect(page.url()).toContain('org_slug=oebb')
   })
 
-  test('OAuth callback page without token shows error', async ({ page }) => {
+  test('OAuth callback page with no sign-in in progress shows error', async ({ page }) => {
     await page.goto('/auth/oauth-callback')
-    await expect(page.getByText('No token received from OAuth provider')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('No sign-in is in progress. Please sign in again.')).toBeVisible({ timeout: 5000 })
     await expect(page.getByText('Back to login')).toBeVisible()
   })
 
-  test('OAuth callback page with invalid token shows error', async ({ page }) => {
+  // The sign-in is completed by an httpOnly cookie the server set, never by the address.
+  test('OAuth callback page ignores a token in the URL and removes it', async ({ page }) => {
+    const redeem = page.waitForRequest('**/api/auth/oauth-code/redeem**')
     await page.goto('/auth/oauth-callback?token=invalid-mock-token')
-    // fetchMe will fail with invalid token — page should show error or redirect to login
-    await expect(
-      page.getByText('Failed to complete OAuth login').or(page.getByText('Sign In')),
-    ).toBeVisible({ timeout: 10000 })
+
+    expect((await redeem).postData() ?? '').not.toContain('invalid-mock-token')
+    await expect(page.getByText('No sign-in is in progress. Please sign in again.')).toBeVisible({ timeout: 10000 })
+    expect(page.url()).not.toContain('token')
+    expect(await page.evaluate(() => localStorage.getItem('ttt_token'))).toBeNull()
   })
 })
 
@@ -99,12 +102,19 @@ test.describe('OAuth Registration', () => {
     expect(page.url()).toContain('mode=register')
   })
 
-  test('register page with oauth_token pre-fills email and hides password', async ({ page }) => {
-    // Create a fake JWT-like token with base64url payload
-    const payload = { type: 'oauth_pending', email: 'test@example.com', name: 'Test User', provider: 'google', providerId: 'g-123' }
-    const fakeToken = `header.${btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')}.signature`
+  // The pending sign-up lives server-side behind an httpOnly cookie; `oauth=1` is only a flag.
+  const mockPending = (page: Page) =>
+    page.route('**/api/oauth/pending**', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ email: 'test@example.com', name: 'Test User', provider: 'google' }),
+      }),
+    )
 
-    await page.goto(`/auth/register?oauth_token=${encodeURIComponent(fakeToken)}`)
+  test('register page with oauth=1 pre-fills email and hides password', async ({ page }) => {
+    await mockPending(page)
+    await page.goto('/auth/register?oauth=1')
     await page.waitForLoadState('networkidle')
 
     // Email should be pre-filled
@@ -116,5 +126,39 @@ test.describe('OAuth Registration', () => {
 
     // OAuth buttons should be hidden (already in OAuth flow)
     await expect(page.getByRole('button', { name: 'Google' })).toHaveCount(0)
+  })
+
+  test('OAuth registration sends no token', async ({ page }) => {
+    await mockPending(page)
+    let body: Record<string, unknown> = {}
+    await page.route('**/api/oauth/register-oauth**', async (route) => {
+      body = route.request().postDataJSON()
+      await route.fulfill({ status: 400, contentType: 'application/json', body: JSON.stringify({ message: 'stopped by test' }) })
+    })
+    await page.goto('/auth/register?oauth=1')
+    await page.waitForLoadState('networkidle')
+    await page.getByLabel('Organization Name').fill('Test Org')
+    await page.getByRole('button', { name: 'Create Account' }).click()
+
+    await expect(page.getByText('stopped by test')).toBeVisible({ timeout: 5000 })
+    expect(Object.keys(body).sort()).toEqual(['orgName', 'orgSlug', 'username'])
+  })
+
+  test('register page with oauth=1 but no sign-up in progress shows error and the full form', async ({ page }) => {
+    await page.goto('/auth/register?oauth=1')
+    await expect(page.getByText('No sign-in is in progress. Please sign in again.')).toBeVisible({ timeout: 5000 })
+    await expect(page.locator('input[type="password"]')).toHaveCount(1)
+  })
+
+  test('register page ignores an oauth_token in the URL', async ({ page }) => {
+    const payload = { type: 'oauth_pending', email: 'test@example.com', name: 'Test User', provider: 'google', providerId: 'g-123' }
+    const fakeToken = `header.${btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '')}.signature`
+
+    await page.goto(`/auth/register?oauth_token=${encodeURIComponent(fakeToken)}`)
+    await page.waitForLoadState('networkidle')
+
+    await expect(page.locator('input[type="email"]')).toHaveValue('')
+    await expect(page.locator('input[type="password"]')).toHaveCount(1)
+    await expect(page.getByRole('button', { name: 'Google' })).toBeVisible()
   })
 })

@@ -41,6 +41,7 @@ const spaPaths = [
   '/auth/login',
   '/auth/register',
   '/auth/oauth-callback',
+  '/auth/activate',
   '/invite/:code',
   '/timesheet',
   '/admin',

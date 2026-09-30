@@ -16,6 +16,13 @@
 </template>
 
 <script setup>
+/**
+ * Finishes an OAuth sign-in.
+ *
+ * ⚠ It reads NOTHING from the address. The OAuth callback leaves a one-time code in an httpOnly
+ * cookie; this view asks the server to redeem it, and the server alone decides who signs in.
+ * Anything that arrives in the address is removed from it and ignored.
+ */
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAppStore } from '@/store/app'
@@ -26,19 +33,16 @@ const appStore = useAppStore()
 const error = ref('')
 
 onMounted(async () => {
-  const token = route.query.token
-  if (!token) {
-    error.value = 'No token received from OAuth provider'
-    return
+  if (Object.keys(route.query).length || route.hash) {
+    await router.replace({ name: 'auth.oauth-callback' })
   }
 
   try {
-    localStorage.setItem('ttt_token', token)
+    await appStore.redeemOAuth()
     await appStore.fetchMe()
     router.push({ name: 'timesheet' })
   } catch (e) {
-    error.value = 'Failed to complete OAuth login'
-    localStorage.removeItem('ttt_token')
+    error.value = e?.response?.data?.message || 'Failed to complete OAuth login'
   }
 })
 </script>

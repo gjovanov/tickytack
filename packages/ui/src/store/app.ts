@@ -87,8 +87,24 @@ export const useAppStore = defineStore('app', {
       localStorage.setItem('ttt_user', JSON.stringify(data.user))
       return data
     },
+    // Finish an OAuth sign-in. The server reads the one-time code from an httpOnly cookie the
+    // callback set; nothing comes from the address bar, and the request carries no body.
+    async redeemOAuth() {
+      const { data } = await httpClient.post('/auth/oauth-code/redeem')
+      this.auth.user = data.user
+      this.auth.token = data.token
+      this.currentOrg = data.org
+      localStorage.setItem('ttt_token', data.token)
+      localStorage.setItem('ttt_user', JSON.stringify(data.user))
+      return data
+    },
+    // Who the provider said this browser is, for the registration form. From the httpOnly
+    // pending cookie, never from the URL.
+    async oauthPending(): Promise<{ email: string; name: string; provider: string }> {
+      const { data } = await httpClient.get('/oauth/pending')
+      return data
+    },
     async registerOAuth(payload: {
-      oauthToken: string
       orgName: string
       orgSlug: string
       username: string
