@@ -1,8 +1,10 @@
 import { Elysia } from 'elysia'
 import { orgDao, userDao, inviteDao, codeDao } from 'services/src/dao'
 import { sendEmail } from 'services/src/biz/email.service'
+import { redeemHandoff, HandoffError, HANDOFF_REFUSED } from 'services/src/biz/oauth-handoff.service'
 import { config } from 'config/src'
 import { authRegister, authLogin, authMe, authLogout, authActivate } from './auth.route'
+import { HANDOFF_COOKIE, handoffCookieOptions, clearedCookie, authCookieOptions } from './handoff-cookie'
 import type { UserTokenized } from '../../types'
 
 const tokenizeUser = (user: {
@@ -87,7 +89,9 @@ export const authController = new Elysia({ prefix: '/auth' })
       // Generate activation code and send email
       const { token: activationToken } = await codeDao.createActivationCode(String(user._id), config.email.activationTokenTtlMinutes)
 
-      const activationUrl = `${config.email.appUrl}/auth/activate?userId=${user._id}&token=${activationToken}`
+      // In the fragment, not the query: a fragment never reaches a server's access log or a
+      // `Referer`. The activate view also accepts the query form, for links already sent.
+      const activationUrl = `${config.email.appUrl}/auth/activate#userId=${user._id}&token=${activationToken}`
       await sendEmail({
         to: email,
         subject: 'Activate your TickyTack account',
@@ -145,6 +149,32 @@ export const authController = new Elysia({ prefix: '/auth' })
     },
     authLogin.schema,
   )
+  // Finish an OAuth sign-in. The code comes only from the httpOnly cookie the callback set, never
+  // from the URL or the body. Answers as `/login` does.
+  .post('/oauth-code/redeem', async ({ jwt, cookie, set }) => {
+    const code = cookie[HANDOFF_COOKIE].value
+    // Cleared before anything can return, on every path: leaving it after a failure would let
+    // the same code be tried again.
+    cookie[HANDOFF_COOKIE].set(clearedCookie(handoffCookieOptions))
+
+    try {
+      const claims = (await redeemHandoff('login', code)) as unknown as UserTokenized
+      const org = await orgDao.findById(claims.orgId)
+      if (!org) throw new HandoffError(HANDOFF_REFUSED)
+
+      const token: string = await jwt.sign(claims)
+      cookie.auth.set({ value: token, ...authCookieOptions })
+
+      return {
+        user: { ...claims },
+        token,
+        org: { id: String(org._id), name: org.name, slug: org.slug },
+      }
+    } catch (err) {
+      set.status = 400
+      return { message: err instanceof HandoffError ? err.message : HANDOFF_REFUSED }
+    }
+  })
   .post(
     authActivate.path,
     async ({ body: { userId, token } }) => {

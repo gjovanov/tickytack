@@ -66,6 +66,12 @@ export const routes = [
             component: () => import('@/views/auth/OAuthCallbackView.vue'),
             meta: { public: true },
           },
+          {
+            path: 'activate',
+            name: 'auth.activate',
+            component: () => import('@/views/auth/ActivateView.vue'),
+            meta: { public: true },
+          },
         ],
       },
       {

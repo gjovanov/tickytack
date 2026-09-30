@@ -162,7 +162,6 @@ const showPassword = ref(false)
 const loading = ref(false)
 const error = ref('')
 const isOAuth = ref(false)
-const oauthToken = ref('')
 
 const inviteCode = ref('')
 const inviteOrgName = ref('')
@@ -187,11 +186,6 @@ const oauthProviders = [
 
 // rules provided by useValidation composable
 
-function decodeJwtPayload(token) {
-  const payload = token.split('.')[1]
-  return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
-}
-
 onMounted(async () => {
   // Check for invite code
   const invite = route.query.invite || sessionStorage.getItem('ttt_invite_code')
@@ -208,19 +202,22 @@ onMounted(async () => {
     }
   }
 
-  const token = route.query.oauth_token
-  if (token) {
-    oauthToken.value = token
+  // Returning from an OAuth provider in register mode. `oauth=1` is only a flag: who the provider
+  // said this is comes from the server, which reads it from this browser's httpOnly pending
+  // cookie, and the registration is authorised by that same cookie. Nothing in the address is a
+  // credential (an `oauth_token` from an older link is ignored).
+  if (route.query.oauth === '1') {
     isOAuth.value = true
     try {
-      const payload = decodeJwtPayload(token)
-      form.value.email = payload.email || ''
-      const nameParts = (payload.name || '').split(' ')
+      const pending = await appStore.oauthPending()
+      form.value.email = pending.email || ''
+      const nameParts = (pending.name || '').split(' ')
       form.value.firstName = nameParts[0] || ''
       form.value.lastName = nameParts.slice(1).join(' ') || ''
-      form.value.username = (payload.name || '').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
-    } catch {
-      // ignore decode errors
+      form.value.username = (pending.name || '').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    } catch (err) {
+      isOAuth.value = false
+      error.value = err.response?.data?.message || t('errors.generic')
     }
   }
 })
@@ -244,7 +241,6 @@ async function handleRegister() {
   try {
     if (isOAuth.value) {
       await appStore.registerOAuth({
-        oauthToken: oauthToken.value,
         orgName: form.value.orgName,
         orgSlug: form.value.orgSlug,
         username: form.value.username,

@@ -7,7 +7,25 @@ import {
   registerWithOAuth,
   parseState,
 } from 'services/src/biz/oauth.service'
+import {
+  createHandoff,
+  peekHandoff,
+  redeemHandoff,
+  releaseHandoff,
+  HandoffError,
+  HANDOFF_REFUSED,
+  LOGIN_HANDOFF_TTL_MS,
+  REGISTER_HANDOFF_TTL_MS,
+} from 'services/src/biz/oauth-handoff.service'
 import { config } from 'config/src'
+import {
+  HANDOFF_COOKIE,
+  handoffCookieOptions,
+  PENDING_COOKIE,
+  pendingCookieOptions,
+  clearedCookie,
+  authCookieOptions,
+} from './handoff-cookie'
 
 const VALID_PROVIDERS = ['google', 'facebook', 'github', 'linkedin', 'microsoft']
 
@@ -34,7 +52,7 @@ export const oauthController = new Elysia({ prefix: '/oauth' })
       return { message: err.message }
     }
   })
-  .get('/callback/:provider', async ({ params: { provider }, query, jwt, cookie: { auth }, set }) => {
+  .get('/callback/:provider', async ({ params: { provider }, query, jwt, cookie, set }) => {
     if (!VALID_PROVIDERS.includes(provider)) {
       set.status = 400
       return { message: `Unknown provider: ${provider}` }
@@ -56,44 +74,62 @@ export const oauthController = new Elysia({ prefix: '/oauth' })
         return { message: 'Could not retrieve email from OAuth provider' }
       }
 
+      // No credential in the redirect URL, in either mode. What the callback learned goes into a
+      // one-time server-side record, and its code into an httpOnly cookie that only this browser
+      // holds; the SPA redeems it with a same-origin request and reads nothing from the address.
       if (mode === 'register') {
-        const pendingToken: string = await jwt.sign({
-          type: 'oauth_pending',
-          email: userInfo.email,
-          name: userInfo.name,
-          provider: userInfo.provider,
-          providerId: userInfo.providerId,
-          avatarUrl: userInfo.avatarUrl || '',
-        } as any)
-        return Response.redirect(
-          `${config.oauth.frontendUrl}/auth/register?oauth_token=${pendingToken}`,
-          302,
+        const pendingCode = await createHandoff(
+          'register',
+          {
+            email: userInfo.email,
+            name: userInfo.name,
+            provider: userInfo.provider,
+            providerId: userInfo.providerId,
+            avatarUrl: userInfo.avatarUrl || '',
+          },
+          REGISTER_HANDOFF_TTL_MS,
         )
+        cookie[PENDING_COOKIE].set({ value: pendingCode, ...pendingCookieOptions })
+        return Response.redirect(`${config.oauth.frontendUrl}/auth/register?oauth=1`, 302)
       }
 
       const { user } = await getOrCreateUser(userInfo, orgSlug)
 
       const token: string = await jwt.sign(user as any)
-      auth.set({
-        value: token,
-        httpOnly: true,
-        maxAge: 24 * 86400,
-        path: '/',
-      })
+      cookie.auth.set({ value: token, ...authCookieOptions })
 
-      return Response.redirect(`${config.oauth.frontendUrl}/auth/oauth-callback?token=${token}`, 302)
+      const handoffCode = await createHandoff('login', { ...user }, LOGIN_HANDOFF_TTL_MS)
+      cookie[HANDOFF_COOKIE].set({ value: handoffCode, ...handoffCookieOptions })
+
+      return Response.redirect(`${config.oauth.frontendUrl}/auth/oauth-callback`, 302)
     } catch (err: any) {
       return Response.redirect(`${config.oauth.frontendUrl}/auth/login?error=${encodeURIComponent(err.message)}`, 302)
     }
   })
-  .post('/register-oauth', async ({ jwt, body, cookie: { auth }, set }) => {
+  // The registration form's prefill: who the provider said this browser is. Read-only; the
+  // registration below consumes the record.
+  .get('/pending', async ({ cookie, set }) => {
     try {
-      const pending = await jwt.verify(body.oauthToken)
-      if (!pending || (pending as any).type !== 'oauth_pending') {
-        set.status = 400
-        return { message: 'Invalid or expired OAuth token' }
-      }
+      const pending = await peekHandoff('register', cookie[PENDING_COOKIE].value)
+      return { email: pending.email, name: pending.name, provider: pending.provider }
+    } catch {
+      set.status = 400
+      return { message: HANDOFF_REFUSED }
+    }
+  })
+  .post('/register-oauth', async ({ jwt, body, cookie, set }) => {
+    // ⚠ The identity comes ONLY from this browser's pending cookie, never from the body or the URL.
+    const pendingCode = cookie[PENDING_COOKIE].value
+    let pending: Record<string, unknown>
+    try {
+      pending = await redeemHandoff('register', pendingCode)
+    } catch (err) {
+      cookie[PENDING_COOKIE].set(clearedCookie(pendingCookieOptions))
+      set.status = 400
+      return { message: err instanceof HandoffError ? err.message : HANDOFF_REFUSED }
+    }
 
+    try {
       const p = pending as any
       const { user } = await registerWithOAuth(
         { provider: p.provider, providerId: p.providerId, email: p.email, name: p.name, avatarUrl: p.avatarUrl },
@@ -101,23 +137,21 @@ export const oauthController = new Elysia({ prefix: '/oauth' })
         body.orgSlug,
         body.username,
       )
+      cookie[PENDING_COOKIE].set(clearedCookie(pendingCookieOptions))
 
       const token: string = await jwt.sign(user as any)
-      auth.set({
-        value: token,
-        httpOnly: true,
-        maxAge: 24 * 86400,
-        path: '/',
-      })
+      cookie.auth.set({ value: token, ...authCookieOptions })
 
       return { user, token, org: { id: user.orgId, name: body.orgName, slug: body.orgSlug } }
     } catch (err: any) {
+      // The account was not created (a taken slug, say): put the pending registration back so
+      // the same person can correct the form without another provider round trip.
+      await releaseHandoff('register', pendingCode as string)
       set.status = 400
       return { message: err.message }
     }
   }, {
     body: t.Object({
-      oauthToken: t.String(),
       orgName: t.String({ minLength: 1 }),
       orgSlug: t.String({ minLength: 1 }),
       username: t.String({ minLength: 3 }),
