@@ -159,14 +159,19 @@ export const authController = new Elysia({ prefix: '/auth' })
 
     try {
       const claims = (await redeemHandoff('login', code)) as unknown as UserTokenized
-      const org = await orgDao.findById(claims.orgId)
+      // The session is issued here, not at the callback, and from the account as it is NOW: one
+      // deactivated since the callback is refused, as the password login would refuse it.
+      const account = await userDao.findById(claims.id)
+      if (!account || !account.isActive) throw new HandoffError(HANDOFF_REFUSED)
+      const org = await orgDao.findById(account.orgId)
       if (!org) throw new HandoffError(HANDOFF_REFUSED)
 
-      const token: string = await jwt.sign(claims)
+      const user = tokenizeUser(account)
+      const token: string = await jwt.sign(user)
       cookie.auth.set({ value: token, ...authCookieOptions })
 
       return {
-        user: { ...claims },
+        user: { ...user },
         token,
         org: { id: String(org._id), name: org.name, slug: org.slug },
       }

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'bun:test'
 import { mongoose } from 'db/src/connection'
 import { MongoMemoryServer } from 'mongodb-memory-server'
-import { User, Org } from 'db/src/models'
+import { User, Org, Invite } from 'db/src/models'
 import {
   buildAuthUrl,
   getOrCreateUser,
@@ -37,22 +37,53 @@ async function createTestOrg(slug: string) {
   return org
 }
 
+const stateOf = (url: string) =>
+  JSON.parse(Buffer.from(new URL(url).searchParams.get('state') || '', 'base64url').toString('utf8'))
+
 describe('OAuth Flow', () => {
   it('should build auth URL for google', () => {
-    const url = buildAuthUrl('google', 'test-corp')
+    const url = buildAuthUrl('google', 'test-corp', 'login', 'nonce-1')
     expect(url).toContain('accounts.google.com')
     expect(url).toContain('client_id=')
     expect(url).toContain('state=')
   })
 
   it('should build auth URL for github', () => {
-    const url = buildAuthUrl('github', 'test-corp')
+    const url = buildAuthUrl('github', 'test-corp', 'login', 'nonce-1')
     expect(url).toContain('github.com/login/oauth/authorize')
     expect(url).toContain('client_id=')
   })
 
   it('should throw for unknown provider', () => {
-    expect(() => buildAuthUrl('unknown', 'test-corp')).toThrow('Unknown OAuth provider')
+    expect(() => buildAuthUrl('unknown', 'test-corp', 'login', 'nonce-1')).toThrow('Unknown OAuth provider')
+  })
+
+  // The caller mints the nonce and keeps a copy in a cookie; the state only carries it.
+  it('should put the caller’s nonce in the state, not one of its own', () => {
+    expect(stateOf(buildAuthUrl('google', 'test-corp', 'login', 'nonce-from-caller')).nonce).toBe('nonce-from-caller')
+  })
+
+  it('should refuse to build a flow with no nonce', () => {
+    expect(() => buildAuthUrl('google', 'test-corp', 'login', '')).toThrow('nonce')
+  })
+
+  it('should put only the org, the mode and the nonce in the state', () => {
+    expect(Object.keys(stateOf(buildAuthUrl('google', 'test-corp', 'login', 'n'))).sort()).toEqual([
+      'mode',
+      'nonce',
+      'orgSlug',
+    ])
+  })
+
+  it('should read only known string fields from a state', () => {
+    const hostile = Buffer.from(
+      JSON.stringify({ orgSlug: 'x', mode: { $ne: 1 }, nonce: 42, inviteCode: 'from-the-url', role: 'admin' }),
+    ).toString('base64url')
+    expect(parseState(hostile)).toEqual({ orgSlug: 'x', mode: undefined, nonce: undefined })
+  })
+
+  it('should throw on a state that is not an object', () => {
+    expect(() => parseState(Buffer.from('123').toString('base64url'))).toThrow('Invalid OAuth state')
   })
 
   it('should parse state with orgSlug', () => {
@@ -65,24 +96,34 @@ describe('OAuth Flow', () => {
     expect(() => parseState('not-valid')).toThrow('Invalid OAuth state')
   })
 
-  it('should create new user from OAuth info', async () => {
+  it('should create a new user from OAuth info and an invite, with the invite’s role', async () => {
     const org = await createTestOrg('oauth-new')
+    const invite = await Invite.create({
+      code: 'oauth-new-invite',
+      orgId: org._id,
+      inviterId: new mongoose.Types.ObjectId(),
+      status: 'active',
+      useCount: 0,
+      maxUses: 1,
+      assignRole: 'manager',
+    })
 
     const info: OAuthUserInfo = {
       provider: 'google',
       providerId: 'g-123',
       email: 'oauthuser@test.com',
+      emailVerified: true,
       name: 'OAuth User',
       avatarUrl: 'https://example.com/pic.jpg',
     }
 
-    const { user, isNew } = await getOrCreateUser(info, 'oauth-new')
+    const { user, isNew } = await getOrCreateUser(info, 'oauth-new', invite.code)
 
     expect(isNew).toBe(true)
     expect(user.email).toBe('oauthuser@test.com')
     expect(user.firstName).toBe('OAuth')
     expect(user.lastName).toBe('User')
-    expect(user.role).toBe('member')
+    expect(user.role).toBe('manager')
     expect(user.orgId).toBe(String(org._id))
 
     const dbUser = await User.findOne({ email: 'oauthuser@test.com' })
@@ -113,6 +154,7 @@ describe('OAuth Flow', () => {
       provider: 'github',
       providerId: 'gh-456',
       email: 'existing@link.com',
+      emailVerified: true,
       name: 'GitHub User',
     }
 
@@ -129,11 +171,21 @@ describe('OAuth Flow', () => {
 
   it('should not duplicate OAuth provider on re-login', async () => {
     const org = await createTestOrg('oauth-nodup')
+    await User.create({
+      email: 'nodup@test.com',
+      username: 'nodup',
+      firstName: 'NoDup',
+      lastName: 'User',
+      role: 'member',
+      orgId: org._id,
+      isActive: true,
+    })
 
     const info: OAuthUserInfo = {
       provider: 'google',
       providerId: 'g-789',
       email: 'nodup@test.com',
+      emailVerified: true,
       name: 'NoDup User',
     }
 
@@ -144,19 +196,33 @@ describe('OAuth Flow', () => {
     expect(dbUser!.oauthProviders).toHaveLength(1)
   })
 
-  it('should throw if org not found', async () => {
+  it('should refuse with one message: no such org, no invite, an unverified email, a deactivated member', async () => {
     const info: OAuthUserInfo = {
       provider: 'google',
       providerId: 'g-999',
       email: 'nobody@test.com',
+      emailVerified: true,
       name: 'Nobody',
     }
+    const closed = await createTestOrg('oauth-closed')
+    for (const [email, isActive] of [['member@closed.test', true], ['inactive@closed.test', false]] as const) {
+      await User.create({ email, username: email.split('@')[0], firstName: 'A', lastName: 'B', role: 'member', orgId: closed._id, isActive })
+    }
+    const refusal = (i: OAuthUserInfo, slug: string) => getOrCreateUser(i, slug).then(() => null, (e: Error) => e.message)
 
-    expect(getOrCreateUser(info, 'nonexistent')).rejects.toThrow('not found')
+    const unknownOrg = await refusal(info, 'nonexistent')
+    const notInvited = await refusal(info, 'oauth-closed')
+    const unverified = await refusal({ ...info, email: 'member@closed.test', emailVerified: false }, 'oauth-closed')
+    const deactivated = await refusal({ ...info, email: 'inactive@closed.test' }, 'oauth-closed')
+
+    expect(unknownOrg).toContain('If you already have an account there')
+    expect([notInvited, unverified, deactivated]).toEqual([unknownOrg, unknownOrg, unknownOrg])
+    expect(await User.countDocuments({ email: 'nobody@test.com' })).toBe(0)
+    expect(await User.countDocuments({ orgId: closed._id, 'oauthProviders.0': { $exists: true } })).toBe(0)
   })
 
   it('should build auth URL with mode=register (no orgSlug)', () => {
-    const url = buildAuthUrl('google', undefined, 'register')
+    const url = buildAuthUrl('google', undefined, 'register', 'nonce-2')
     expect(url).toContain('accounts.google.com')
     expect(url).toContain('client_id=')
     const stateMatch = url.match(/state=([^&]+)/)
@@ -178,6 +244,7 @@ describe('OAuth Flow', () => {
       provider: 'google',
       providerId: 'g-reg-001',
       email: 'newadmin@oauthreg.com',
+      emailVerified: true,
       name: 'OAuth Admin',
       avatarUrl: 'https://example.com/avatar.jpg',
     }
@@ -214,6 +281,7 @@ describe('OAuth Flow', () => {
       provider: 'github',
       providerId: 'gh-reg-001',
       email: 'oauth@taken.com',
+      emailVerified: true,
       name: 'OAuth User',
     }
 

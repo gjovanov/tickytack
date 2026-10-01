@@ -54,6 +54,16 @@ test.describe('OAuth Login', () => {
     expect(page.url()).toContain('org_slug=oebb')
   })
 
+  test('login page explains an OAuth refusal with a fixed message', async ({ page }) => {
+    await page.goto('/auth/login?error=no_access')
+    await expect(page.getByText("This sign-in can't be used for that organization.")).toBeVisible({ timeout: 5000 })
+
+    // Anything that is not a known reason code shows the generic message, never the text itself.
+    await page.goto('/auth/login?error=Please%20call%20555-0100')
+    await expect(page.getByText('Sign-in failed. Please try again.')).toBeVisible({ timeout: 5000 })
+    await expect(page.getByText('555-0100')).toHaveCount(0)
+  })
+
   test('OAuth callback page with no sign-in in progress shows error', async ({ page }) => {
     await page.goto('/auth/oauth-callback')
     await expect(page.getByText('No sign-in is in progress. Please sign in again.')).toBeVisible({ timeout: 5000 })
@@ -100,6 +110,30 @@ test.describe('OAuth Registration', () => {
 
     expect(page.url()).toContain('/api/oauth/google')
     expect(page.url()).toContain('mode=register')
+  })
+
+  // With an invite, an OAuth button joins the invited org instead of creating a new one.
+  test('with an invite, the OAuth buttons join the invited org', async ({ page }) => {
+    await page.route('**/api/invite/join-code-123', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ isValid: true, orgName: 'Acme Labs', orgSlug: 'acme-labs', status: 'active' }),
+      }),
+    )
+    await page.route('**/api/oauth/google**', (route) =>
+      route.fulfill({ status: 200, contentType: 'text/html', body: 'intercepted' }),
+    )
+
+    await page.goto('/auth/register?invite=join-code-123')
+    await expect(page.getByText('Joining')).toBeVisible({ timeout: 5000 })
+    await page.getByRole('button', { name: 'Google' }).click()
+    await page.waitForURL('**/api/oauth/google**', { timeout: 10000 })
+
+    const url = new URL(page.url())
+    expect(url.searchParams.get('mode')).toBe('login')
+    expect(url.searchParams.get('org_slug')).toBe('acme-labs')
+    expect(url.searchParams.get('invite_code')).toBe('join-code-123')
   })
 
   // The pending sign-up lives server-side behind an httpOnly cookie; `oauth=1` is only a flag.

@@ -165,6 +165,7 @@ const isOAuth = ref(false)
 
 const inviteCode = ref('')
 const inviteOrgName = ref('')
+const inviteOrgSlug = ref('')
 
 const form = ref({
   firstName: '',
@@ -196,6 +197,7 @@ onMounted(async () => {
       const { data } = await (await import('@/services/http-client')).default.get(`/invite/${invite}`)
       if (data.isValid) {
         inviteOrgName.value = data.orgName
+        inviteOrgSlug.value = data.orgSlug
       }
     } catch {
       // ignore
@@ -227,6 +229,14 @@ function autoSlug() {
 }
 
 function oauthRegister(provider) {
+  // With an invite this is not a registration: it joins the invited org, and the server admits
+  // an identity that is not yet a member only with the invite. Without one, `mode=register`
+  // creates a new org as before.
+  if (inviteCode.value && inviteOrgSlug.value) {
+    const q = new URLSearchParams({ mode: 'login', org_slug: inviteOrgSlug.value, invite_code: inviteCode.value })
+    window.location.href = `/api/oauth/${provider}?${q}`
+    return
+  }
   window.location.href = `/api/oauth/${provider}?mode=register`
 }
 
