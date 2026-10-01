@@ -120,10 +120,18 @@ const oauthProviders = [
 
 // rules provided by useValidation composable
 
+// Why an OAuth sign-in came back here. The server sends a reason code, and only these codes are
+// shown, each as a fixed message: nothing from the address is displayed as text.
+const OAUTH_REFUSALS = ['state', 'no_access', 'invite', 'invite_email', 'failed']
+
 onMounted(() => {
   const invite = route.query.invite
   if (invite) {
     sessionStorage.setItem('ttt_invite_code', invite)
+  }
+  const refusal = route.query.error
+  if (typeof refusal === 'string') {
+    error.value = t(`errors.oauth.${OAUTH_REFUSALS.includes(refusal) ? refusal : 'failed'}`)
   }
 })
 
